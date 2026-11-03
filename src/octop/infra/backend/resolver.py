@@ -31,7 +31,12 @@ def default_agent_backend_spec(workspace_dir: Path) -> dict[str, Any]:
     return dict(DEFAULT_BACKEND_SPEC)
 
 
-def ensure_workspace_inside_root(spec: Any, workspace_dir: Path) -> Any:
+def ensure_workspace_inside_root(
+    spec: Any,
+    workspace_dir: Path,
+    *,
+    windows: bool | None = None,
+) -> Any:
     """Clamp filesystem roots that cannot contain the agent workspace.
 
     The agent workspace lives at ``~/.octop/agents/<id>``. On Windows a
@@ -41,7 +46,9 @@ def ensure_workspace_inside_root(spec: Any, workspace_dir: Path) -> Any:
     with ``Path ... outside root directory``. Shrink such roots to the
     workspace itself so the agent always starts (access only narrows).
     """
-    if os.name != "nt" or not isinstance(spec, dict):
+    if windows is None:
+        windows = os.name == "nt"
+    if not windows or not isinstance(spec, dict):
         return spec
     kind = spec.get("type")
     if kind == "composite":
@@ -50,9 +57,13 @@ def ensure_workspace_inside_root(spec: Any, workspace_dir: Path) -> Any:
             return spec
         return {
             **spec,
-            "default": ensure_workspace_inside_root(spec.get("default"), workspace_dir),
+            "default": ensure_workspace_inside_root(
+                spec.get("default"), workspace_dir, windows=True
+            ),
             "routes": {
-                str(prefix): ensure_workspace_inside_root(sub, workspace_dir)
+                str(prefix): ensure_workspace_inside_root(
+                    sub, workspace_dir, windows=True
+                )
                 for prefix, sub in routes.items()
             },
         }

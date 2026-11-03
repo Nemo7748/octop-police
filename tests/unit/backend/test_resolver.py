@@ -35,16 +35,14 @@ def test_ensure_workspace_inside_root_posix_keeps_spec(tmp_path: Path) -> None:
     ws = tmp_path / "agents" / "AGT001"
     ws.mkdir(parents=True)
     spec = {"type": "local_shell", "root_dir": "/somewhere", "virtual_mode": True}
-    with patch("octop.infra.backend.resolver.os.name", "posix"):
-        assert ensure_workspace_inside_root(spec, ws) is spec
+    assert ensure_workspace_inside_root(spec, ws, windows=False) is spec
 
 
 def test_ensure_workspace_inside_root_keeps_containing_root(tmp_path: Path) -> None:
     ws = tmp_path / "agents" / "AGT001"
     ws.mkdir(parents=True)
     spec = {"type": "local_shell", "root_dir": str(tmp_path), "virtual_mode": True}
-    with patch("octop.infra.backend.resolver.os.name", "nt"):
-        assert ensure_workspace_inside_root(spec, ws) is spec
+    assert ensure_workspace_inside_root(spec, ws, windows=True) is spec
 
 
 def test_ensure_workspace_inside_root_falls_back_when_outside(tmp_path: Path) -> None:
@@ -53,8 +51,7 @@ def test_ensure_workspace_inside_root_falls_back_when_outside(tmp_path: Path) ->
     outside = tmp_path / "elsewhere"
     outside.mkdir()
     spec = {"type": "local_shell", "root_dir": str(outside), "virtual_mode": True}
-    with patch("octop.infra.backend.resolver.os.name", "nt"):
-        result = ensure_workspace_inside_root(spec, ws)
+    result = ensure_workspace_inside_root(spec, ws, windows=True)
     assert result == {
         "type": "local_shell",
         "root_dir": str(ws.resolve()),
@@ -75,8 +72,7 @@ def test_ensure_workspace_inside_root_handles_composite(tmp_path: Path) -> None:
             "/media": {"type": "local_shell", "root_dir": str(tmp_path), "virtual_mode": True},
         },
     }
-    with patch("octop.infra.backend.resolver.os.name", "nt"):
-        result = ensure_workspace_inside_root(spec, ws)
+    result = ensure_workspace_inside_root(spec, ws, windows=True)
     assert result["default"]["root_dir"] == str(ws.resolve())
     assert result["routes"]["/media"]["root_dir"] == str(tmp_path)
 
@@ -85,12 +81,10 @@ def test_ensure_workspace_inside_root_ignores_non_fs_backends(tmp_path: Path) ->
     ws = tmp_path / "agents" / "AGT001"
     ws.mkdir(parents=True)
     state_spec = {"type": "state"}
-    with patch("octop.infra.backend.resolver.os.name", "nt"):
-        assert ensure_workspace_inside_root(state_spec, ws) is state_spec
+    assert ensure_workspace_inside_root(state_spec, ws, windows=True) is state_spec
     physical = {
         "type": "local_shell",
         "root_dir": str(tmp_path / "elsewhere"),
         "virtual_mode": False,
     }
-    with patch("octop.infra.backend.resolver.os.name", "nt"):
-        assert ensure_workspace_inside_root(physical, ws) is physical
+    assert ensure_workspace_inside_root(physical, ws, windows=True) is physical
