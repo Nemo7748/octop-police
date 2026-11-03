@@ -61,9 +61,7 @@ def ensure_workspace_inside_root(
                 spec.get("default"), workspace_dir, windows=True
             ),
             "routes": {
-                str(prefix): ensure_workspace_inside_root(
-                    sub, workspace_dir, windows=True
-                )
+                str(prefix): ensure_workspace_inside_root(sub, workspace_dir, windows=True)
                 for prefix, sub in routes.items()
             },
         }
