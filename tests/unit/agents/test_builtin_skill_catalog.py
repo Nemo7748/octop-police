@@ -127,7 +127,9 @@ async def test_user_skills_directory_untouched() -> None:
     catalog = get_builtin_skill_catalog()
     agent = FakeHarnessAgent()
     user_skill = "skills/police-ppt-generation/SKILL.md"
-    await agent.workspace.awrite_text(user_skill, "---\nname: mine\ndescription: user override\n---\nmine\n")
+    await agent.workspace.awrite_text(
+        user_skill, "---\nname: mine\ndescription: user override\n---\nmine\n"
+    )
     before = await agent.workspace.aread_text(user_skill)
 
     await catalog.sync_to_workspace(agent.workspace)
@@ -135,9 +137,10 @@ async def test_user_skills_directory_untouched() -> None:
     assert await agent.workspace.aread_text(user_skill) == before
     # The user override is written to skills/, the builtin to _builtin_skills/;
     # read-time override precedence lives in the skills router, not here.
-    assert await agent.workspace.aread_text(
-        "_builtin_skills/police-ppt-generation/SKILL.md"
-    ) == catalog.get("police-ppt-generation").skill_md  # type: ignore[union-attr]
+    assert (
+        await agent.workspace.aread_text("_builtin_skills/police-ppt-generation/SKILL.md")
+        == catalog.get("police-ppt-generation").skill_md
+    )  # type: ignore[union-attr]
 
 
 async def test_sync_against_disk_backed_workspace(tmp_path: Path) -> None:
@@ -167,7 +170,7 @@ def mixed_library(tmp_path: Path) -> Path:
     _write_skill(
         tmp_path,
         "ok-skill",
-        "---\nname: ok-skill\ndescription: fine\nmetadata:\n  builtin_skill_version: \"1.0\"\n---\n\nbody\n",
+        '---\nname: ok-skill\ndescription: fine\nmetadata:\n  builtin_skill_version: "1.0"\n---\n\nbody\n',
     )
     _write_skill(tmp_path, "no-frontmatter", "# just markdown\n")
     _write_skill(
@@ -178,7 +181,7 @@ def mixed_library(tmp_path: Path) -> Path:
     _write_skill(
         tmp_path,
         "empty-description",
-        "---\nname: empty-description\ndescription: \"\"\nmetadata:\n  builtin_skill_version: \"1.0\"\n---\n\nbody\n",
+        '---\nname: empty-description\ndescription: ""\nmetadata:\n  builtin_skill_version: "1.0"\n---\n\nbody\n',
     )
     (tmp_path / "no-skill-md").mkdir()
     (tmp_path / "__pycache__").mkdir()
@@ -205,7 +208,12 @@ async def test_sync_skips_invalid_but_syncs_valid(mixed_library: Path) -> None:
     result = await catalog.sync_to_workspace(agent.workspace)
 
     assert result.synced == ["ok-skill"]
-    assert result.invalid_slugs == ["empty-description", "missing-version", "no-frontmatter", "no-skill-md"]
+    assert result.invalid_slugs == [
+        "empty-description",
+        "missing-version",
+        "no-frontmatter",
+        "no-skill-md",
+    ]
     stored = await agent.workspace.aread_text("_builtin_skills/ok-skill/SKILL.md")
     assert stored is not None and "body" in stored
     assert await agent.workspace.aread_text("_builtin_skills/no-frontmatter/SKILL.md") is None

@@ -313,9 +313,7 @@ def _parse_catalog_meta(
         )
         group = None
     order = data.get("order")
-    if order is not None and (
-        isinstance(order, bool) or not isinstance(order, int) or order <= 0
-    ):
+    if order is not None and (isinstance(order, bool) or not isinstance(order, int) or order <= 0):
         logger.warning(
             "expert %s: order must be a positive integer, got %r; ignoring",
             expert_id,
@@ -380,8 +378,7 @@ class ExpertCatalog:
         taken_by = group_orders.get(order)
         if taken_by is not None and taken_by != expert_id:
             logger.warning(
-                "expert %s: order %d in group %s already used by %s; "
-                "skipping from catalog",
+                "expert %s: order %d in group %s already used by %s; skipping from catalog",
                 expert_id,
                 order,
                 group,

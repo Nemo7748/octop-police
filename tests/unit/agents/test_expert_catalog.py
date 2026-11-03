@@ -185,6 +185,7 @@ def test_expert_quick_prompts_from_manifest(tmp_path: Path) -> None:
     assert expert.quick_prompts[0].title_zh == "标题"
     assert expert.quick_prompts[0].prompt_en == "Hello"
 
+
 def _visible_manifest(expert_dir: Path, *, group: str, order: int) -> None:
     _write_manifest(
         expert_dir,
@@ -218,9 +219,7 @@ def test_catalog_visible_requires_group_and_order(tmp_path: Path) -> None:
     _write_manifest(no_meta, extra={"catalog_visible": True})
     bad_group = tmp_path / "bad-group"
     bad_group.mkdir()
-    _write_manifest(
-        bad_group, extra={"catalog_visible": True, "group": "other", "order": 1}
-    )
+    _write_manifest(bad_group, extra={"catalog_visible": True, "group": "other", "order": 1})
     bad_order = tmp_path / "bad-order"
     bad_order.mkdir()
     _write_manifest(

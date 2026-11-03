@@ -89,9 +89,7 @@ def test_police_template_group_counts_and_unique_orders() -> None:
             data = _manifest(slug)
             assert data["group"] == group, f"{slug} must belong to {group}"
             group_orders.append(data["order"])
-        assert len(set(group_orders)) == len(group_orders), (
-            f"duplicate order inside {group}"
-        )
+        assert len(set(group_orders)) == len(group_orders), f"duplicate order inside {group}"
 
 
 def test_police_template_prompt_files_exist() -> None:

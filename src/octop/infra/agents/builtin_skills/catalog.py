@@ -92,8 +92,7 @@ class BuiltinSkillCatalog:
                 result.skipped.append(slug)
                 continue
             pairs = [
-                (f"{DEFAULT_BUILTIN_SKILLS_DIR}/{slug}/{rel}", data)
-                for rel, data in entry.files
+                (f"{DEFAULT_BUILTIN_SKILLS_DIR}/{slug}/{rel}", data) for rel, data in entry.files
             ]
             await workspace.aupload_many(pairs)
             result.synced.append(slug)
