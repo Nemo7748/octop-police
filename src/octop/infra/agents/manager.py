@@ -21,6 +21,7 @@ from octop.infra.agents.security import SecuritySettingsStore, ToolGuardRulesSto
 from octop.infra.backend.resolver import (
     backend_spec_supports_execution,
     default_agent_backend_spec,
+    ensure_workspace_inside_root,
     resolve_agent_backend_spec,
 )
 from octop.infra.connectors.builder import (
@@ -1021,13 +1022,16 @@ class AgentManager:
 
     def _backend_spec_for_row(self, row: AgentRow) -> Any:
         cfg = self._agent_config_dict(row)
+        workspace_dir = self._paths.ensure_agent_workspace(row.agent_id)
         backend_spec = cfg.get("backend")
         if backend_spec is None:
-            workspace_dir = self._paths.ensure_agent_workspace(row.agent_id)
             return default_agent_backend_spec(workspace_dir)
-        return resolve_agent_backend_spec(
-            backend_spec,
-            repo=self._repos.storage_backend_repo,
+        return ensure_workspace_inside_root(
+            resolve_agent_backend_spec(
+                backend_spec,
+                repo=self._repos.storage_backend_repo,
+            ),
+            workspace_dir,
         )
 
     def _backend_workspace_for_row(self, row: AgentRow) -> Any:

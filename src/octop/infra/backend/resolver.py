@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Any
 
 from octop.infra.backend.adapter import row_to_backend_spec
+
+logger = logging.getLogger(__name__)
 
 
 def default_agent_backend_spec(workspace_dir: Path) -> dict[str, Any]:
@@ -26,6 +29,51 @@ def default_agent_backend_spec(workspace_dir: Path) -> dict[str, Any]:
             "virtual_mode": True,
         }
     return dict(DEFAULT_BACKEND_SPEC)
+
+
+def ensure_workspace_inside_root(spec: Any, workspace_dir: Path) -> Any:
+    """Clamp filesystem roots that cannot contain the agent workspace.
+
+    The agent workspace lives at ``~/.octop/agents/<id>``. On Windows a
+    ``local_shell``/``filesystem`` root of ``'/'`` resolves to the server
+    process's current-drive root, and a user-picked root on another drive
+    simply cannot host the workspace — harness workspace seeding then fails
+    with ``Path ... outside root directory``. Shrink such roots to the
+    workspace itself so the agent always starts (access only narrows).
+    """
+    if os.name != "nt" or not isinstance(spec, dict):
+        return spec
+    kind = spec.get("type")
+    if kind == "composite":
+        routes = spec.get("routes")
+        if not isinstance(routes, dict):
+            return spec
+        return {
+            **spec,
+            "default": ensure_workspace_inside_root(spec.get("default"), workspace_dir),
+            "routes": {
+                str(prefix): ensure_workspace_inside_root(sub, workspace_dir)
+                for prefix, sub in routes.items()
+            },
+        }
+    if kind not in ("local_shell", "filesystem") or not spec.get("virtual_mode"):
+        return spec
+    root = spec.get("root_dir")
+    if not isinstance(root, str) or not root:
+        return spec
+    try:
+        ws = workspace_dir.resolve()
+        if ws.is_relative_to(Path(root).resolve()):
+            return spec
+    except OSError:
+        return spec
+    logger.warning(
+        "backend root_dir %r cannot contain agent workspace %s; "
+        "falling back to the workspace itself",
+        root,
+        ws,
+    )
+    return {**spec, "root_dir": str(ws)}
 
 
 def resolve_agent_backend_spec(
