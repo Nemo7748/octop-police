@@ -2,7 +2,7 @@ import { Button, Result, Spin } from "antd";
 import { Settings } from "lucide-react";
 import { GraduationCap } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { usePoliceNavigation } from "../../../hooks/usePoliceNavigation";
 import type { OctopAgent } from "../../../context/AgentContext";
 import {
   formatAgentError,
@@ -22,7 +22,7 @@ export default function AgentNotReadyScreen({
   loading = false,
 }: AgentNotReadyScreenProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigation = usePoliceNavigation();
 
   if (loading) {
     return (
@@ -46,7 +46,12 @@ export default function AgentNotReadyScreen({
           <Button
             type="primary"
             size="large"
-            onClick={() => navigate("/experts")}
+            onClick={() =>
+              navigation.navigate({
+                sourceEntry: "agent-not-ready.no-agents",
+                capabilityId: "experts",
+              })
+            }
           >
             {t("chat.createExpert")}
           </Button>
@@ -98,12 +103,25 @@ export default function AgentNotReadyScreen({
             <Button
               type="primary"
               icon={<Settings size={14} />}
-              onClick={() => navigate("/admin/models")}
+              onClick={() =>
+              navigation.navigate({
+                sourceEntry: "agent-not-ready.models",
+                capabilityId: "models",
+              })
+            }
             >
               {t("modelConfig.configureButton")}
             </Button>
           ) : (
-            <Button type="primary" onClick={() => navigate("/experts")}>
+            <Button
+              type="primary"
+              onClick={() =>
+                navigation.navigate({
+                  sourceEntry: "agent-not-ready.experts",
+                  capabilityId: "experts",
+                })
+              }
+            >
               {t("chat.goToExperts")}
             </Button>
           )

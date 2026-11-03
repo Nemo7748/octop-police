@@ -11,6 +11,7 @@ import type {
   TokenUsage,
 } from "../../../api/types";
 import type { ContentBlockItem } from "../../../utils/messageParser";
+import type { TaskRunStatus } from "../workbenchTypes";
 
 export interface ToolCallData {
   name?: string;
@@ -92,6 +93,8 @@ export interface SessionStreamState {
   historyHasMore: boolean;
   historyNextOffset: number;
   historyLoadingMore: boolean;
+  /** 真实运行状态：来自流生命周期，不由取消伪装为成功。 */
+  runStatus: TaskRunStatus;
   listeners: Set<() => void>;
   /** Cached snapshot reference (updated on every notify). */
   _snapshot: SessionSnapshot;
@@ -107,4 +110,5 @@ export interface SessionSnapshot {
   historyHasMore: boolean;
   historyLoadingMore: boolean;
   historyNextOffset: number;
+  runStatus: TaskRunStatus;
 }

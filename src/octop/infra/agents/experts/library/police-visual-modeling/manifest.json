@@ -1,0 +1,57 @@
+{
+  "id": "police-visual-modeling",
+  "catalog_visible": true,
+  "group": "police-development",
+  "order": 4,
+  "label": {
+    "zh": "数据可视化建模",
+    "en": "Visual Data Modeling"
+  },
+  "description": {
+    "zh": "根据数据结构、维度、关系和目标，生成模型 JSON、可视化 HTML 与说明文档。",
+    "en": "From data structures, dimensions and goals, produce model JSON, visual HTML and docs."
+  },
+  "welcome_message": {
+    "zh": "描述数据结构与建模目标，我来生成模型与可视化",
+    "en": "Describe your data and goal — I'll model and visualize it"
+  },
+  "icon_name": "network",
+  "color": "#7c3aed",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成可视化模型",
+        "en": "Build a model"
+      },
+      "description": {
+        "zh": "输入：实体/字段、关系与建模目标。预期产物：outbound/<task>/ 下的 model.json、model.html（关系可视化）与 README.md（说明文档）",
+        "en": "Input: entities/fields, relations and goal. Output: model.json, model.html and README.md under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请帮我做数据可视化建模。\n\n数据结构（实体、字段）：\n\n关系与建模目标：\n\n预期产物：在 outbound/<task>/ 下生成 model.json（模型定义）、model.html（关系图可视化）和 README.md（口径与用法说明）。",
+        "en": "Please model my data for visualization.\n\nStructure (entities, fields):\n\nRelations and goal:\n\nExpected output: model.json, model.html and README.md under outbound/<task>/."
+      },
+      "color": "#ede9fe",
+      "icon_name": "network"
+    },
+    {
+      "title": {
+        "zh": "评审现有模型",
+        "en": "Review a model"
+      },
+      "description": {
+        "zh": "粘贴现有模型 JSON，检查维度设计与关系合理性并给出改进版",
+        "en": "Paste a model JSON; get a review and an improved version"
+      },
+      "prompt": {
+        "zh": "请评审以下数据模型 JSON 的维度设计与关系合理性，指出问题并生成改进版（写入 outbound/<task>/）：\n\n",
+        "en": "Please review this model JSON for dimensions and relations, flag issues, and write an improved version into outbound/<task>/:\n\n"
+      },
+      "color": "#f5f3ff",
+      "icon_name": "scan-search"
+    }
+  ]
+}

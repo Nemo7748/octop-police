@@ -1,0 +1,57 @@
+{
+  "id": "police-release-review",
+  "catalog_visible": true,
+  "group": "web-workbench",
+  "order": 6,
+  "label": {
+    "zh": "应用发布与审核",
+    "en": "Release & Review"
+  },
+  "description": {
+    "zh": "根据应用文件、发布说明和审核规则，生成发布检查单、审核报告与展示 HTML；不执行真实上线或审批。",
+    "en": "Produce release checklists, review reports and showcase HTML from your app files and rules; no real deployment or approval."
+  },
+  "welcome_message": {
+    "zh": "提供应用文件与审核要求，我来生成发布检查单与审核报告",
+    "en": "Share app files and review rules — I'll draft the checklist and report"
+  },
+  "icon_name": "clipboard-check",
+  "color": "#4d7c0f",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成发布检查单",
+        "en": "Draft release checklist"
+      },
+      "description": {
+        "zh": "输入：应用文件清单、发布说明、审核规则。预期产物：outbound/<task>/ 下的 release-checklist.md 与 review-report.html；结论标注需人工复核",
+        "en": "Input: app files, release notes, review rules. Output: release-checklist.md and review-report.html under outbound/<task>/, marked for human review"
+      },
+      "prompt": {
+        "zh": "请生成应用发布检查单与审核报告。\n\n应用文件清单：\n\n发布说明：\n\n审核规则（安全/合规/文档要求）：\n\n预期产物：在 outbound/<task>/ 下生成 release-checklist.md（逐项检查）和 review-report.html（结果与风险展示）。结论仅供人工复核，不执行真实上线。",
+        "en": "Please draft a release checklist and review report.\n\nApp files:\n\nRelease notes:\n\nReview rules (security/compliance/docs):\n\nExpected output: release-checklist.md and review-report.html under outbound/<task>/, marked \"for human review only\". No real deployment."
+      },
+      "color": "#ecfccb",
+      "icon_name": "clipboard-check"
+    },
+    {
+      "title": {
+        "zh": "生成展示页",
+        "en": "Build showcase"
+      },
+      "description": {
+        "zh": "基于发布说明生成应用介绍展示 HTML，供评审会议使用",
+        "en": "Generate a showcase HTML from release notes for review meetings"
+      },
+      "prompt": {
+        "zh": "请基于以下发布说明生成应用展示页 showcase.html（功能亮点、截图占位、使用说明），写入 outbound/<task>/：\n\n",
+        "en": "Please build a showcase page (highlights, screenshot placeholders, usage) from these release notes into outbound/<task>/showcase.html:\n\n"
+      },
+      "color": "#f7fee7",
+      "icon_name": "presentation"
+    }
+  ]
+}

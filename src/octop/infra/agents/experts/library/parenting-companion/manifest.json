@@ -1,5 +1,6 @@
 {
   "id": "parenting-companion",
+  "catalog_visible": false,
   "label": {
     "zh": "育儿管家",
     "en": "Parenting Companion"

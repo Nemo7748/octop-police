@@ -94,6 +94,7 @@ export type {
   ToolCallData,
   UserComposerContext,
 } from "./sseHelpers";
+import type { TaskRunStatus } from "../workbenchTypes";
 
 /** Default snapshot for sessions that don't exist yet. Stable reference. */
 const EMPTY_SNAPSHOT: SessionSnapshot = Object.freeze({
@@ -105,6 +106,7 @@ const EMPTY_SNAPSHOT: SessionSnapshot = Object.freeze({
   historyHasMore: false,
   historyLoadingMore: false,
   historyNextOffset: 0,
+  runStatus: "unknown",
 });
 
 const sessionStates = new Map<string, SessionStreamState>();
@@ -225,6 +227,7 @@ function buildSnapshot(state: SessionStreamState): SessionSnapshot {
     historyHasMore: state.historyHasMore,
     historyLoadingMore: state.historyLoadingMore,
     historyNextOffset: state.historyNextOffset,
+    runStatus: state.runStatus,
   };
 }
 
@@ -245,6 +248,7 @@ function getOrCreate(sessionId: string): SessionStreamState {
       historyHasMore: false,
       historyNextOffset: 0,
       historyLoadingMore: false,
+      runStatus: "unknown",
       listeners: new Set(),
       _snapshot: EMPTY_SNAPSHOT,
     };
@@ -268,6 +272,7 @@ function notify(state: SessionStreamState) {
 function beginStream(state: SessionStreamState): void {
   state.thinkingStartedAt = Date.now();
   state.isStreaming = true;
+  state.runStatus = "running";
 }
 
 function clearStreamingFlags(state: SessionStreamState): void {
@@ -406,6 +411,7 @@ export function clearMessages(sessionId: string) {
   const state = getOrCreate(sessionId);
   state.messages = [];
   clearStreamingFlags(state);
+  state.runStatus = "unknown";
   state.runUsage = null;
   state.streamMsg = "";
   state.streamId = "";
@@ -417,6 +423,28 @@ export function clearMessages(sessionId: string) {
   notify(state);
 }
 
+/** 认证失效：abort 全部执行流、清空受保护内存状态并删除聊天草稿。 */
+function handleAuthCleared(): void {
+  for (const state of sessionStates.values()) {
+    state.abortController?.abort();
+  }
+  sessionStates.clear();
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i += 1) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith(DRAFT_STORAGE_PREFIX)) keys.push(key);
+    }
+    for (const key of keys) sessionStorage.removeItem(key);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("octop:auth-cleared", handleAuthCleared);
+}
+
 /** Cancel any in-flight stream for a session. */
 export function cancelStream(sessionId: string) {
   const state = sessionStates.get(sessionId);
@@ -424,6 +452,7 @@ export function cancelStream(sessionId: string) {
   state.abortController?.abort();
   state.abortController = null;
   clearStreamingFlags(state);
+  state.runStatus = "cancelled";
   state.runUsage = null;
   state.messages = state.messages.map((m) =>
     m.status === "streaming" ? { ...m, status: "done" as const } : m,
@@ -1079,7 +1108,7 @@ async function sendTurnWebSocket(
   text: string,
   messageContent: string | Array<Record<string, unknown>>,
   controller: AbortController,
-  finish: () => void,
+  finish: (terminalStatus?: TaskRunStatus) => void,
   modelRef?: string | null,
   threadId?: string | null,
   mcpServers?: string[] | null,
@@ -1110,7 +1139,7 @@ async function sendTurnWebSocket(
       } catch {
         // ignore
       }
-      finish();
+      finish("cancelled");
       settle(true);
     };
     controller.signal.addEventListener("abort", onAbort, { once: true });
@@ -1153,7 +1182,13 @@ async function sendTurnWebSocket(
           } catch {
             // ignore
           }
-          finish();
+          finish(
+            data.type === "done"
+              ? "done"
+              : data.type === "error"
+              ? "failed"
+              : undefined,
+          );
           settle(true);
         }
       } catch {
@@ -1216,8 +1251,11 @@ export async function sendTurn(
 
   const messageContent = buildUserMessageContent(text, attachments);
 
-  const finish = () => {
+  const finish = (terminalStatus?: TaskRunStatus) => {
     clearStreamingFlags(state);
+    state.runStatus =
+      terminalStatus ??
+      (state.runStatus === "running" ? "unknown" : state.runStatus);
     state.abortController = null;
     state.streamMsg = "";
     state.streamId = "";
@@ -1256,7 +1294,7 @@ export async function sendTurn(
         timestamp: Date.now(),
       },
     ];
-    finish();
+    finish("failed");
   }
 }
 
@@ -1265,7 +1303,7 @@ async function consumeSseResponse(
   sessionId: string,
   res: Response,
   controller: AbortController,
-  finish: () => void,
+  finish: (terminalStatus?: TaskRunStatus) => void,
 ): Promise<void> {
   const reader = res.body?.getReader();
   if (!reader) {
@@ -1294,7 +1332,13 @@ async function consumeSseResponse(
         chunk.type === "hitl_required"
       ) {
         controller.abort();
-        finish();
+        finish(
+          chunk.type === "done"
+            ? "done"
+            : chunk.type === "error"
+            ? "failed"
+            : undefined,
+        );
         return;
       }
     }
@@ -1336,8 +1380,11 @@ export async function resumeHitl(
     (headers as Record<string, string>).Authorization = `Bearer ${token}`;
   }
 
-  const finish = () => {
+  const finish = (terminalStatus?: TaskRunStatus) => {
     clearStreamingFlags(state);
+    state.runStatus =
+      terminalStatus ??
+      (state.runStatus === "running" ? "unknown" : state.runStatus);
     state.abortController = null;
     state.streamMsg = "";
     state.streamId = "";

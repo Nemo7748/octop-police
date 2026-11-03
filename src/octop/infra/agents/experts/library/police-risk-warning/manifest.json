@@ -1,0 +1,57 @@
+{
+  "id": "police-risk-warning",
+  "catalog_visible": true,
+  "group": "police-development",
+  "order": 5,
+  "label": {
+    "zh": "风险评估与预警",
+    "en": "Risk Assessment & Alert"
+  },
+  "description": {
+    "zh": "基于你提供的指标、规则和阈值生成风险报告（HTML/JSON）；仅辅助分析，结论需人工复核，不自动作出执法决策。",
+    "en": "Produce risk reports (HTML/JSON) from your metrics, rules and thresholds; analysis only, human review required."
+  },
+  "welcome_message": {
+    "zh": "提供指标与阈值规则，我来生成风险评估报告",
+    "en": "Share metrics and threshold rules — I'll draft the risk report"
+  },
+  "icon_name": "alert-triangle",
+  "color": "#dc2626",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成风险评估报告",
+        "en": "Draft risk report"
+      },
+      "description": {
+        "zh": "输入：对象指标数据、预警规则与阈值。预期产物：outbound/<task>/ 下的 risk-report.html 与 risk-rules.json；报告标注需人工复核",
+        "en": "Input: subject metrics, alert rules and thresholds. Output: risk-report.html and risk-rules.json under outbound/<task>/, marked for human review"
+      },
+      "prompt": {
+        "zh": "请生成风险评估报告。\n\n对象与指标数据：\n\n预警规则与阈值：\n\n预期产物：在 outbound/<task>/ 下生成 risk-report.html（风险评分与分级展示）和 risk-rules.json（规则配置）。报告仅辅助分析，需标注\"结论仅供人工复核，不作为执法依据\"。",
+        "en": "Please draft a risk assessment report.\n\nSubject and metrics:\n\nRules and thresholds:\n\nExpected output: risk-report.html and risk-rules.json under outbound/<task>/, marked \"for human review only, not a basis for enforcement\"."
+      },
+      "color": "#fee2e2",
+      "icon_name": "alert-triangle"
+    },
+    {
+      "title": {
+        "zh": "设计预警规则",
+        "en": "Design alert rules"
+      },
+      "description": {
+        "zh": "描述业务场景，帮你把风险关注点转化为可配置的规则与阈值",
+        "en": "Describe the scenario; get configurable rules and thresholds"
+      },
+      "prompt": {
+        "zh": "针对以下业务场景设计预警规则（指标、阈值、分级、触发动作建议），并生成规则 JSON（写入 outbound/<task>/）：\n\n",
+        "en": "Design alert rules (metrics, thresholds, levels, suggested actions) for this scenario and write the JSON into outbound/<task>/:\n\n"
+      },
+      "color": "#fef2f2",
+      "icon_name": "sliders-horizontal"
+    }
+  ]
+}

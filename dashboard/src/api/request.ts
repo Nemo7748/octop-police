@@ -21,6 +21,9 @@ export function clearAuthToken() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem("octop:active-agent");
   setActiveAgentId(null);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("octop:auth-cleared"));
+  }
 }
 
 /** Persist a sliding-renewed access token from an API response, if present. */

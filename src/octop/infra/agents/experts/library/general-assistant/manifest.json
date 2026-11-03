@@ -1,5 +1,6 @@
 {
   "id": "general-assistant",
+  "catalog_visible": false,
   "label": {
     "zh": "小通 · 通用助手",
     "en": "Main · General Assistant"

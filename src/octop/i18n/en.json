@@ -316,7 +316,7 @@
     "SKILL_IMPORT_UNSUPPORTED_URL": "This skill URL source is not supported.",
     "SKILL_IMPORT_FAILED": "Skill import failed: {reason}",
     "SKILL_ALREADY_EXISTS": "Skill {name} already exists. Enable overwrite to replace it.",
-    "EXPERT_MARKET_FAILED": "Expert market is temporarily unavailable. Please try again later.",
+    "EXPERT_MARKET_FAILED": "Agent market is temporarily unavailable. Please try again later.",
     "DESKTOP_SESSION_LIMIT": "Too many concurrent remote desktop streams (max {limit}). Close other connections and try again.",
     "DESKTOP_CAPTURE_FAILED": "Screen capture failed repeatedly. On Linux servers restart the virtual desktop; on macOS grant Screen Recording and Accessibility, then reconnect."
   },
@@ -476,8 +476,8 @@
     }
   },
   "agent_errors": {
-    "no_models_configured": "No models are configured. Go to Settings \u2192 Models to add a Provider, then enable this expert again.",
-    "model_ref_unavailable": "The default model is unavailable or disabled. Check Settings \u2192 Models or update this expert's default model, then try again."
+    "no_models_configured": "No models are configured. Go to Settings \u2192 Models to add a Provider, then enable this agent again.",
+    "model_ref_unavailable": "The default model is unavailable or disabled. Check Settings \u2192 Models or update this agent's default model, then try again."
   },
   "attachment": {
     "header": "[Attachment] {filename}",

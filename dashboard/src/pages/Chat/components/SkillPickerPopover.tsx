@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { usePoliceNavigation } from "../../../hooks/usePoliceNavigation";
 import { Import } from "lucide-react";
 import SearchablePickerPanel, {
   pickerStyles,
@@ -29,7 +29,7 @@ export default function SkillPickerPopover({
   onNavigateAway,
 }: SkillPickerPopoverProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigation = usePoliceNavigation();
   const skillDisplayName = useSkillDisplayName();
 
   const enabledSkills = useMemo(
@@ -61,7 +61,10 @@ export default function SkillPickerPopover({
       footerLabel={t("skills.importSkills")}
       onFooterClick={() => {
         onNavigateAway?.();
-        navigate("/skills");
+        navigation.navigate({
+          sourceEntry: "skill-picker.manage",
+          capabilityId: "skills",
+        });
       }}
       renderItem={(skill) => {
         const active = selectedSkills.includes(skill.slug);

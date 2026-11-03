@@ -9,11 +9,16 @@ import ContextChip from "./ContextChip";
 import { skillChipLabel } from "../utils/skillChipLabel";
 import { useSkillDisplayName } from "../../Agent/Skills/skillDisplayNames";
 import { modelShortLabel } from "../../../utils/modelOptions";
+import type { ConversationReference } from "../workbenchTypes";
+import WorkspaceReferenceChips from "./WorkspaceReferenceChips";
 import styles from "../index.module.less";
 
 interface ChatInputPreviewBarProps {
-  attachments: ChatAttachment[];
+  attachments: readonly ChatAttachment[];
   uploading: boolean;
+  references?: readonly ConversationReference[];
+  invalidReferencePaths?: readonly string[];
+  onRemoveReference?: (path: string) => void;
   selectedSkills: string[];
   selectedConnectors: string[];
   selectedTargetAgents: string[];
@@ -35,6 +40,9 @@ interface ChatInputPreviewBarProps {
 export default function ChatInputPreviewBar({
   attachments,
   uploading,
+  references = [],
+  invalidReferencePaths = [],
+  onRemoveReference,
   selectedSkills,
   selectedConnectors,
   selectedTargetAgents,
@@ -57,6 +65,7 @@ export default function ChatInputPreviewBar({
 
   const hasContent =
     attachments.length > 0 ||
+    references.length > 0 ||
     uploading ||
     selectedConnectors.length > 0 ||
     selectedSkills.length > 0 ||
@@ -67,6 +76,13 @@ export default function ChatInputPreviewBar({
 
   return (
     <div className={styles.imagePreviewBar}>
+      {onRemoveReference && (
+        <WorkspaceReferenceChips
+          references={references}
+          invalidPaths={invalidReferencePaths}
+          onRemove={onRemoveReference}
+        />
+      )}
       {attachments.map((attachment, idx) =>
         attachment.kind === "image" ? (
           <div

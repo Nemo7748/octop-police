@@ -16,11 +16,15 @@ async def test_list_experts_returns_bundled_library(env: Any) -> None:
     assert r.status_code == 200
     rows = r.json()
     ids = {row["id"] for row in rows}
-    # The bundled library lists ``general-assistant``; ``default`` is hidden from the list API.
-    assert "general-assistant" in ids
-    assert len(rows) >= 1
-    sample = next(r for r in rows if r["id"] == "general-assistant")
+    # Only the 11 police templates are visible; legacy ones stay reachable by id.
+    assert len(rows) == 11
+    assert "police-data-dashboard" in ids
+    assert "general-assistant" not in ids
+    assert "default" not in ids
+    sample = next(r for r in rows if r["id"] == "police-data-dashboard")
     assert "label" in sample and "zh" in sample["label"] and "en" in sample["label"]
+    assert sample["group"] == "police-development"
+    assert isinstance(sample["order"], int)
 
 
 async def test_get_expert_includes_prompt_files(env: Any) -> None:

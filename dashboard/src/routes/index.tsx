@@ -1,5 +1,11 @@
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
+import PoliceRouteBoundary from "../components/PoliceRouteBoundary";
+import {
+  resolvePoliceCapability,
+  type PoliceCapabilityId,
+  type PoliceLayout,
+} from "./policeCapabilities";
 
 // Lazy-loaded pages — Common
 const ExpertsPage = lazy(() => import("../pages/Experts"));
@@ -39,6 +45,8 @@ export interface RouteConfig {
   element: React.ReactNode;
   /** When true, the route uses a wrapper component instead of a plain element */
   useWrapper?: boolean;
+  capabilityId?: PoliceCapabilityId;
+  layout?: PoliceLayout;
 }
 
 export const pathToKey: Record<string, string> = {
@@ -60,7 +68,6 @@ export const pathToKey: Record<string, string> = {
   "/memory": "memory",
   // Admin
   "/admin/models": "models",
-  // Admin
   "/admin/users": "admin-users",
   "/admin/backend": "admin-storage",
   "/admin/audit": "admin-audit",
@@ -88,56 +95,174 @@ export const SELF_HEADER_PATHS = new Set<string>([]);
 /** Mobile-only fullscreen pages (custom header + no content padding). */
 export const MOBILE_FULLSCREEN_PATHS = new Set(["/subagents"]);
 
-export function resolveSelectedKey(pathname: string): string {
-  if (pathToKey[pathname]) return pathToKey[pathname];
-  if (pathname.startsWith("/chat/")) return "chat";
-  return "chat";
+export function resolveSelectedKey(pathname: string): string | null {
+  const capability = resolvePoliceCapability(pathname);
+  if (capability) return capability.selectedKey;
+  return pathToKey[pathname] ?? null;
 }
 
 export const routeConfigs: RouteConfig[] = [
   // Chat (handled via ChatWithKey wrapper in MainLayout)
-  { path: "/chat", element: null, useWrapper: true },
-  { path: "/chat/:agentId", element: null, useWrapper: true },
-  { path: "/chat/:agentId/:threadId", element: null, useWrapper: true },
+  {
+    path: "/chat",
+    element: null,
+    useWrapper: true,
+    capabilityId: "assistants",
+    layout: "workbench",
+  },
+  {
+    path: "/chat/:agentId",
+    element: null,
+    useWrapper: true,
+    capabilityId: "assistants",
+    layout: "workbench",
+  },
+  {
+    path: "/chat/:agentId/:threadId",
+    element: null,
+    useWrapper: true,
+    capabilityId: "assistants",
+    layout: "workbench",
+  },
 
   // Common
-  { path: "/experts", element: <ExpertsPage /> },
-  { path: "/tasks", element: <CronJobsPage /> },
-  { path: "/connectors", element: <ConnectorsPage /> },
-  { path: "/acp", element: <ACPPage /> },
-  { path: "/skills", element: <SkillsPage /> },
-  { path: "/token-usage", element: <TokenUsagePage /> },
+  {
+    path: "/experts",
+    element: <ExpertsPage />,
+    capabilityId: "experts",
+    layout: "capability",
+  },
+  {
+    path: "/tasks",
+    element: <CronJobsPage />,
+    capabilityId: "cron",
+    layout: "capability",
+  },
+  {
+    path: "/connectors",
+    element: <ConnectorsPage />,
+    capabilityId: "connectors",
+    layout: "capability",
+  },
+  {
+    path: "/acp",
+    element: <ACPPage />,
+    capabilityId: "acp",
+    layout: "capability",
+  },
+  {
+    path: "/skills",
+    element: <SkillsPage />,
+    capabilityId: "skills",
+    layout: "capability",
+  },
+  {
+    path: "/token-usage",
+    element: <TokenUsagePage />,
+    capabilityId: "token-usage",
+    layout: "capability",
+  },
 
   // Control
-  { path: "/channels", element: <ChannelsPage /> },
-  { path: "/remote-browser", element: <RemoteBrowserPage /> },
-  { path: "/remote-desktop", element: <RemoteDesktopPage /> },
-  { path: "/subagents", element: <SubagentsPage /> },
-  { path: "/mbti", element: <MBTIPage /> },
-  { path: "/memory", element: <MemoryPage /> },
+  {
+    path: "/channels",
+    element: <ChannelsPage />,
+    capabilityId: "channels",
+    layout: "capability",
+  },
+  {
+    path: "/remote-browser",
+    element: <RemoteBrowserPage />,
+    capabilityId: "remote-browser",
+    layout: "capability",
+  },
+  {
+    path: "/remote-desktop",
+    element: <RemoteDesktopPage />,
+    capabilityId: "remote-desktop",
+    layout: "capability",
+  },
+  {
+    path: "/subagents",
+    element: <SubagentsPage />,
+    capabilityId: "subagents",
+    layout: "capability",
+  },
+  {
+    path: "/mbti",
+    element: <MBTIPage />,
+    capabilityId: "mbti",
+    layout: "capability",
+  },
+  {
+    path: "/memory",
+    element: <MemoryPage />,
+    capabilityId: "memory",
+    layout: "capability",
+  },
   { path: "/workspace", element: <Navigate to="/experts" replace /> },
 
   // Settings
-  { path: "/admin/models", element: <ModelsPage /> },
+  {
+    path: "/admin/models",
+    element: <ModelsPage />,
+    capabilityId: "models",
+    layout: "capability",
+  },
 
-  // Admin (RequireAdmin wrapper applied in MainLayout — Task 10)
-  { path: "/admin/users", element: <OctopAdminUsersPage /> },
+  // Admin (RequireAdmin wrapper applied in MainLayout)
+  {
+    path: "/admin/users",
+    element: <OctopAdminUsersPage />,
+    capabilityId: "admin-users",
+    layout: "capability",
+  },
   {
     path: "/admin/shared-models",
     element: <Navigate to="/admin/models" replace />,
   },
   { path: "/models", element: <Navigate to="/admin/models" replace /> },
-  { path: "/admin/backend", element: <AdminStoragePage /> },
-  { path: "/admin/audit", element: <OctopAdminAuditPage /> },
+  {
+    path: "/admin/backend",
+    element: <AdminStoragePage />,
+    capabilityId: "admin-storage",
+    layout: "capability",
+  },
+  {
+    path: "/admin/audit",
+    element: <OctopAdminAuditPage />,
+    capabilityId: "admin-audit",
+    layout: "capability",
+  },
   { path: "/admin/agents", element: <Navigate to="/admin/users" replace /> },
-  { path: "/admin/plugins", element: <AdminPluginsPage /> },
-  { path: "/admin/advanced", element: <AdvancedSettingsPage /> },
-  { path: "/admin/security", element: <AdminSecurityPage /> },
+  {
+    path: "/admin/plugins",
+    element: <AdminPluginsPage />,
+    capabilityId: "admin-plugins",
+    layout: "capability",
+  },
+  {
+    path: "/admin/advanced",
+    element: <AdvancedSettingsPage />,
+    capabilityId: "settings",
+    layout: "capability",
+  },
+  {
+    path: "/admin/security",
+    element: <AdminSecurityPage />,
+    capabilityId: "admin-security",
+    layout: "capability",
+  },
   {
     path: "/admin/voice",
     element: <Navigate to="/admin/advanced?tab=voice" replace />,
   },
-  { path: "/admin/updates", element: <AdminUpdatesPage /> },
+  {
+    path: "/admin/updates",
+    element: <AdminUpdatesPage />,
+    capabilityId: "admin-updates",
+    layout: "capability",
+  },
 
   // Legacy redirects — keeps old bookmarks working
   { path: "/admin/storage", element: <Navigate to="/admin/backend" replace /> },
@@ -179,4 +304,8 @@ export const routeConfigs: RouteConfig[] = [
   // Misc
   { path: "/pwa-debug", element: <PwaDebugPage /> },
   { path: "/", element: <Navigate to="/chat" replace /> },
+  {
+    path: "*",
+    element: <PoliceRouteBoundary status="unavailable" />,
+  },
 ];

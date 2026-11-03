@@ -1,5 +1,6 @@
 {
   "id": "stock-assistant",
+  "catalog_visible": false,
   "label": {
     "zh": "老钱 · 证券观察员",
     "en": "Lao Qian · Market Observer"

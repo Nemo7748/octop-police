@@ -14,6 +14,7 @@ from harness_agent.security.models import SecurityPolicy
 
 from octop.i18n.domains.agents import NO_MODELS_CONFIGURED, format_agent_start_error
 from octop.infra.agents.acp_settings import ACPSettingsStore
+from octop.infra.agents.builtin_skills.catalog import get_builtin_skill_catalog
 from octop.infra.agents.langfuse import LangfuseSettings, LangfuseSettingsStore
 from octop.infra.agents.providers import ProviderStore, sync_providers_to_harness
 from octop.infra.agents.security import SecuritySettingsStore, ToolGuardRulesStore
@@ -957,6 +958,15 @@ class AgentManager:
         ws = agent.workspace
         if self._plugin_manager is not None:
             await asyncio.to_thread(self._plugin_manager.sync_skills_to_workspace, ws)
+
+        try:
+            await get_builtin_skill_catalog().sync_to_workspace(ws)
+        except Exception:
+            logger.warning(
+                "Builtin skill sync failed for agent %s; continuing startup",
+                row.agent_id,
+                exc_info=True,
+            )
 
         # Patch config when bootstrap finishes, but defer graph recompile until
         # the in-flight turn has fully drained (sync _init_graph mid-stream segfaults).

@@ -207,7 +207,7 @@ def delete(agent_id: str, as_user: str | None, yes: bool) -> None:
 
 @agent.command("experts")
 def list_experts() -> None:
-    """List bundled expert (scene) templates."""
+    """List bundled agent (scene) templates."""
     from rich.console import Console
     from rich.table import Table
 
@@ -218,7 +218,7 @@ def list_experts() -> None:
     if json_output_enabled():
         click.echo(_json.dumps(rows, indent=2))
         return
-    table = Table(title="Expert templates")
+    table = Table(title="Agent templates")
     table.add_column("id")
     table.add_column("label (zh)")
     table.add_column("description (zh)")

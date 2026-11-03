@@ -5,6 +5,7 @@ import { resolveSlashIcon } from "../../../utils/slashIcons";
 import { groupSlashByCategory } from "../../../utils/slashCategories";
 import type { SkillSpec } from "../../Agent/Skills/useSkills";
 import type { ChatAgentOption } from "../components/ExpertAgentAvatar";
+import type { ConversationReference } from "../workbenchTypes";
 import {
   buildMentionItems,
   type MentionPick,
@@ -23,6 +24,19 @@ export type SlashMenuItem = {
   spec: SlashCommandSpec;
 };
 
+export type SlashSkillEntry = {
+  kind: "skill";
+  slug: string;
+  label: string;
+};
+
+export type SlashCommandEntry = {
+  kind: "command";
+  item: SlashMenuItem;
+};
+
+export type SlashCombinedEntry = SlashSkillEntry | SlashCommandEntry;
+
 interface UseSlashMentionInputParams {
   text: string;
   setText: (value: string) => void;
@@ -37,6 +51,8 @@ interface UseSlashMentionInputParams {
     kind: string;
   }[];
   availableAgents: ChatAgentOption[];
+  availableFiles?: readonly ConversationReference[];
+  onReferenceSelect?: (reference: ConversationReference) => void;
   agentId?: string | null;
   selectedSkills: string[];
   selectedConnectors: string[];
@@ -63,6 +79,8 @@ export function useSlashMentionInput({
   availableSkills,
   availableConnectors,
   availableAgents,
+  availableFiles,
+  onReferenceSelect,
   agentId,
   selectedSkills,
   selectedConnectors,
@@ -96,8 +114,15 @@ export function useSlashMentionInput({
         availableSkills ?? [],
         availableConnectors ?? [],
         mentionAgents,
+        availableFiles ?? [],
       ),
-    [mentionQuery, availableSkills, availableConnectors, mentionAgents],
+    [
+      mentionQuery,
+      availableSkills,
+      availableConnectors,
+      mentionAgents,
+      availableFiles,
+    ],
   );
 
   const slashMenuItems = useMemo<SlashMenuItem[]>(
@@ -150,6 +175,49 @@ export function useSlashMentionInput({
     [slashMenuItems, locale],
   );
 
+  const slashSkillItems = useMemo<readonly SlashSkillEntry[]>(() => {
+    if (!slashMenuOpen) return [];
+    const query = text.startsWith("/") ? text.slice(1).toLowerCase() : "";
+    return (availableSkills ?? [])
+      .filter((skill) => skill.enabled)
+      .filter((skill) => {
+        if (!query) return true;
+        const label = skill.name || skill.slug;
+        return (
+          label.toLowerCase().includes(query) ||
+          skill.slug.toLowerCase().includes(query)
+        );
+      })
+      .map((skill) => ({
+        kind: "skill" as const,
+        slug: skill.slug,
+        label: skill.name || skill.slug,
+      }));
+  }, [slashMenuOpen, text, availableSkills]);
+
+  const slashCombinedFlat = useMemo<readonly SlashCombinedEntry[]>(
+    () => [
+      ...slashSkillItems,
+      ...slashMenuFlat.map((item) => ({ kind: "command" as const, item })),
+    ],
+    [slashSkillItems, slashMenuFlat],
+  );
+
+  const handleSlashSkillSelect = useCallback(
+    (slug: string) => {
+      setSlashMenuOpen(false);
+      setText("");
+      if (!onSkillsChange) return;
+      onSkillsChange(
+        selectedSkills.includes(slug)
+          ? selectedSkills.filter((name) => name !== slug)
+          : [...selectedSkills, slug],
+      );
+      textareaRef.current?.focus();
+    },
+    [onSkillsChange, selectedSkills, setText, textareaRef],
+  );
+
   const focusTextareaEnd = useCallback(() => {
     setTimeout(() => {
       const el = textareaRef.current;
@@ -197,7 +265,13 @@ export function useSlashMentionInput({
       const after = text.slice(mentionAtIndex + mentionQuery.length + 1);
       setText(`${before}${after}`.trimStart());
       setMentionMenuOpen(false);
-      if (pick.kind === "skill" && onSkillsChange) {
+      if (pick.kind === "file") {
+        onReferenceSelect?.({
+          path: pick.path,
+          name: pick.label,
+          kind: "file",
+        });
+      } else if (pick.kind === "skill" && onSkillsChange) {
         onSkillsChange(
           selectedSkills.includes(pick.slug)
             ? selectedSkills.filter((n) => n !== pick.slug)
@@ -229,6 +303,7 @@ export function useSlashMentionInput({
       selectedConnectors,
       onTargetAgentsChange,
       selectedTargetAgents,
+      onReferenceSelect,
       textareaRef,
     ],
   );
@@ -239,6 +314,17 @@ export function useSlashMentionInput({
       if (item) runSlashCommand(item);
     },
     [slashMenuItems, runSlashCommand],
+  );
+
+  const handleCombinedSelect = useCallback(
+    (entry: SlashCombinedEntry) => {
+      if (entry.kind === "skill") {
+        handleSlashSkillSelect(entry.slug);
+      } else {
+        handleSlashSelect(entry.item.command);
+      }
+    },
+    [handleSlashSkillSelect, handleSlashSelect],
   );
 
   const handleTextChange = useCallback(
@@ -253,7 +339,10 @@ export function useSlashMentionInput({
         const mention = getMentionAtCursor(val);
         if (
           mention &&
-          (availableSkills || availableConnectors || mentionAgents.length > 0)
+          (availableSkills ||
+            availableConnectors ||
+            mentionAgents.length > 0 ||
+            (availableFiles?.length ?? 0) > 0)
         ) {
           setMentionMenuOpen(true);
           setMentionQuery(mention.query);
@@ -264,7 +353,13 @@ export function useSlashMentionInput({
         }
       }
     },
-    [setText, availableSkills, availableConnectors, mentionAgents.length],
+    [
+      setText,
+      availableSkills,
+      availableConnectors,
+      mentionAgents.length,
+      availableFiles?.length,
+    ],
   );
 
   const handleKeyDown = useCallback(
@@ -297,23 +392,24 @@ export function useSlashMentionInput({
         }
       }
 
-      if (slashMenuOpen && slashMenuFlat.length > 0) {
+      if (slashMenuOpen && slashCombinedFlat.length > 0) {
         if (e.key === "ArrowDown") {
           e.preventDefault();
-          setSlashMenuIndex((i) => (i + 1) % slashMenuFlat.length);
+          setSlashMenuIndex((i) => (i + 1) % slashCombinedFlat.length);
           return;
         }
         if (e.key === "ArrowUp") {
           e.preventDefault();
           setSlashMenuIndex(
-            (i) => (i - 1 + slashMenuFlat.length) % slashMenuFlat.length,
+            (i) =>
+              (i - 1 + slashCombinedFlat.length) % slashCombinedFlat.length,
           );
           return;
         }
         if (e.key === "Tab" || (e.key === "Enter" && !e.shiftKey)) {
           e.preventDefault();
-          const selected = slashMenuFlat[slashMenuIndex];
-          if (selected) handleSlashSelect(selected.command);
+          const selected = slashCombinedFlat[slashMenuIndex];
+          if (selected) handleCombinedSelect(selected);
           return;
         }
         if (e.key === "Escape") {
@@ -338,9 +434,9 @@ export function useSlashMentionInput({
       mentionMenuIndex,
       handleMentionSelect,
       slashMenuOpen,
-      slashMenuFlat,
+      slashCombinedFlat,
       slashMenuIndex,
-      handleSlashSelect,
+      handleCombinedSelect,
     ],
   );
 
@@ -361,11 +457,14 @@ export function useSlashMentionInput({
     slashMenuGroups,
     slashPickerGroups,
     slashMenuItems,
+    slashSkillItems,
+    slashCombinedFlat,
     mentionItems,
     runSlashCommand,
     matchSlashCommand,
     handleMentionSelect,
     handleSlashSelect,
+    handleCombinedSelect,
     handleTextChange,
     handleKeyDown,
     closeShortcutPicker,

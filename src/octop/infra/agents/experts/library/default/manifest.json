@@ -1,5 +1,6 @@
 {
   "id": "default",
+  "catalog_visible": false,
   "label": {
     "zh": "默认场景",
     "en": "Default Scene"

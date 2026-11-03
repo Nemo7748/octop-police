@@ -119,6 +119,39 @@ async def _aoverwrite_text(workspace: Any, path: str, content: str) -> str | Non
     return None
 
 
+def _home_entry(meta: dict[str, Any]) -> dict[str, Any] | None:
+    """Parse ``metadata.octop.home`` home-catalog metadata; ``None`` when absent/malformed.
+
+    A malformed entry merely means the skill is not recommended on the home
+    screen — never an error.
+    """
+    metadata = meta.get("metadata")
+    octop = metadata.get("octop") if isinstance(metadata, dict) else None
+    home = octop.get("home") if isinstance(octop, dict) else None
+    if not isinstance(home, dict):
+        return None
+    order = home.get("order")
+    if isinstance(order, bool) or not isinstance(order, int) or order < 1:
+        return None
+    prompt = home.get("prompt")
+    zh = prompt.get("zh") if isinstance(prompt, dict) else None
+    en = prompt.get("en") if isinstance(prompt, dict) else None
+    if not isinstance(zh, str) or not zh.strip() or not isinstance(en, str) or not en.strip():
+        return None
+    color = home.get("color")
+    icon_name = home.get("icon_name")
+    if not isinstance(color, str) or not color.strip():
+        return None
+    if not isinstance(icon_name, str) or not icon_name.strip():
+        return None
+    return {
+        "order": order,
+        "prompt": {"zh": zh, "en": en},
+        "color": color,
+        "icon_name": icon_name,
+    }
+
+
 def _summary_dict(
     name: str,
     meta: dict[str, Any],
@@ -145,6 +178,10 @@ def _summary_dict(
         ext = metadata.get("octop") or metadata.get("lightclaw") or metadata.get("orca") or {}
         if isinstance(ext, dict) and "emoji" in ext:
             out["emoji"] = str(ext["emoji"])
+    # Optional home-catalog recommendation (police skills); omitted when absent.
+    home = _home_entry(meta)
+    if home is not None:
+        out["home_entry"] = home
     return out
 
 

@@ -1,6 +1,7 @@
 import type { RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import Markdown from "../../../../components/Markdown/LazyMarkdown";
+import MarkdownErrorBoundary from "../../../Chat/components/MarkdownErrorBoundary";
 import styles from "../index.module.less";
 
 /**
@@ -97,9 +98,51 @@ function MarkdownPreview({ content }: { content: string }) {
         />
       ) : (
         <div ref={liveRef}>
-          <Markdown content={content} className={styles.markdownPreview} />
+          <MarkdownErrorBoundary sourceText={content}>
+            <Markdown content={content} className={styles.markdownPreview} />
+          </MarkdownErrorBoundary>
         </div>
       )}
+    </div>
+  );
+}
+
+export type HtmlViewport = "desktop" | "tablet" | "mobile";
+
+const VIEWPORT_WIDTHS: Record<HtmlViewport, string> = {
+  desktop: "100%",
+  tablet: "768px",
+  mobile: "390px",
+};
+
+function HtmlPreview({ content }: { content: string }) {
+  const [viewport, setViewport] = useState<HtmlViewport>("desktop");
+  return (
+    <div className={styles.htmlPreviewWrap}>
+      <div className={styles.htmlViewportBar}>
+        {(["desktop", "tablet", "mobile"] as const).map((vp) => (
+          <button
+            key={vp}
+            type="button"
+            className={`${styles.htmlViewportBtn} ${
+              viewport === vp ? styles.htmlViewportBtnActive : ""
+            }`}
+            onClick={() => setViewport(vp)}
+            title={vp}
+          >
+            {vp === "desktop" ? "PC" : vp === "tablet" ? "平板" : "移动"}
+          </button>
+        ))}
+      </div>
+      <div className={styles.htmlPreviewScroll}>
+        <iframe
+          title="HTML preview"
+          className={styles.htmlFrame}
+          srcDoc={content}
+          sandbox="allow-scripts allow-popups allow-forms"
+          style={{ width: VIEWPORT_WIDTHS[viewport] }}
+        />
+      </div>
     </div>
   );
 }
@@ -118,14 +161,7 @@ export default function FilePreview({
       // Render in a sandboxed iframe with an opaque origin (no
       // ``allow-same-origin``) so the previewed markup cannot reach our
       // cookies, JWT, or parent DOM. Scripts run in that isolated origin only.
-      return (
-        <iframe
-          title="HTML preview"
-          className={styles.htmlFrame}
-          srcDoc={content}
-          sandbox="allow-scripts allow-popups allow-forms"
-        />
-      );
+      return <HtmlPreview content={content} />;
     default:
       return null;
   }

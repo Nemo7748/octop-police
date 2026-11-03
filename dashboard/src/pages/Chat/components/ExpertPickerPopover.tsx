@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { usePoliceNavigation } from "../../../hooks/usePoliceNavigation";
 import { GraduationCap } from "lucide-react";
 import SearchablePickerPanel, {
   pickerStyles,
@@ -24,7 +24,7 @@ export default function ExpertPickerPopover({
   onNavigateAway,
 }: ExpertPickerPopoverProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigation = usePoliceNavigation();
 
   const filterFn = useCallback(
     (agent: ChatAgentOption, query: string) =>
@@ -44,7 +44,10 @@ export default function ExpertPickerPopover({
       footerLabel={t("chat.expertPickerManage")}
       onFooterClick={() => {
         onNavigateAway?.();
-        navigate("/experts");
+        navigation.navigate({
+          sourceEntry: "expert-picker.manage",
+          capabilityId: "experts",
+        });
       }}
       renderItem={(agent) => {
         const active = selectedAgentIds.includes(agent.agent_id);

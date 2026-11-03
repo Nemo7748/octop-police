@@ -1,0 +1,57 @@
+{
+  "id": "police-field-offline-collection",
+  "catalog_visible": true,
+  "group": "police-development",
+  "order": 2,
+  "label": {
+    "zh": "移动端外勤离线采集",
+    "en": "Field Offline Collection"
+  },
+  "description": {
+    "zh": "根据表单字段、采集项和移动交互要求，生成响应式采集页面与 PWA 项目文件，离线能力下载后在受控环境运行。",
+    "en": "Generate responsive collection forms and PWA files from your fields and flow; run offline builds in a controlled environment."
+  },
+  "welcome_message": {
+    "zh": "告诉我采集表单的字段与流程，我来生成移动端采集页面",
+    "en": "Describe your form fields and flow — I'll build the mobile pages"
+  },
+  "icon_name": "smartphone",
+  "color": "#0ea5e9",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成离线采集表单",
+        "en": "Create offline form"
+      },
+      "description": {
+        "zh": "输入：采集项字段（名称/类型/必填）、流程步骤与移动端要求。预期产物：outbound/<task>/ 下的 index.html（响应式表单）与 manifest.json/sw.js（PWA 文件）",
+        "en": "Input: field list (name/type/required), steps and mobile needs. Output: index.html (responsive form) plus manifest.json/sw.js under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请生成移动端外勤离线采集表单。\n\n采集字段（名称、类型、是否必填）：\n\n采集流程与离线要求：\n\n预期产物：在 outbound/<task>/ 下生成响应式 index.html 及 PWA 文件（manifest.json、sw.js）。沙箱内仅验收界面效果，离线缓存能力需下载后在受控环境验证。",
+        "en": "Please build a mobile offline collection form.\n\nFields (name, type, required):\n\nFlow and offline needs:\n\nExpected output: responsive index.html plus PWA files (manifest.json, sw.js) under outbound/<task>/. Sandbox verifies UI only; offline caching must be validated after download."
+      },
+      "color": "#e0f2fe",
+      "icon_name": "smartphone"
+    },
+    {
+      "title": {
+        "zh": "优化采集交互",
+        "en": "Improve UX flow"
+      },
+      "description": {
+        "zh": "描述现有采集流程的痛点，给出移动端交互改进方案与界面稿",
+        "en": "Describe pain points and get mobile UX improvements with a mockup"
+      },
+      "prompt": {
+        "zh": "现有外勤采集流程如下，存在以下痛点：\n\n请给出移动端交互优化方案，并生成改进后的界面 HTML（写入 outbound/<task>/）。",
+        "en": "Current collection flow and pain points:\n\nPropose mobile UX improvements and generate the improved HTML (into outbound/<task>/)."
+      },
+      "color": "#f0f9ff",
+      "icon_name": "wand-2"
+    }
+  ]
+}

@@ -15,6 +15,9 @@ import {
 } from "../../routes";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import RequireAdmin from "../../components/RequireAdmin";
+import PoliceRouteBoundary from "../../components/PoliceRouteBoundary";
+import PoliceSkillRail from "../../pages/Chat/components/PoliceSkillRail";
+import { isPoliceWorkbenchPath } from "../../routes/policeCapabilities";
 
 const Chat = lazy(() => import("../../pages/Chat"));
 const TerminalPage = lazy(() => import("../../pages/Control/Terminal"));
@@ -47,6 +50,8 @@ export default function MainLayout() {
   const currentPath = location.pathname;
   const selectedKey = resolveSelectedKey(currentPath);
   const isMobile = useIsMobile();
+  const isPoliceWorkbenchRoute = isPoliceWorkbenchPath(currentPath);
+  const isPoliceRoute = currentPath !== "/pwa-debug";
   const isFullscreen =
     FULLSCREEN_PATHS.has(currentPath) ||
     [...FULLSCREEN_PATHS].some((p) => currentPath.startsWith(p + "/")) ||
@@ -100,30 +105,32 @@ export default function MainLayout() {
   }, []);
 
   const routes = (
-    <Suspense
-      fallback={
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            flex: 1,
-          }}
-        >
-          <Spin size="large" />
-        </div>
-      }
-    >
-      <Routes>
-        {routeConfigs.map((rc) => {
-          let el = rc.useWrapper ? <ChatWithKey /> : rc.element;
-          if (rc.path.startsWith("/admin/")) {
-            el = <RequireAdmin>{el}</RequireAdmin>;
-          }
-          return <Route key={rc.path} path={rc.path} element={el} />;
-        })}
-      </Routes>
-    </Suspense>
+    <PoliceRouteBoundary>
+      <Suspense
+        fallback={
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flex: 1,
+            }}
+          >
+            <Spin size="large" />
+          </div>
+        }
+      >
+        <Routes>
+          {routeConfigs.map((rc) => {
+            let el = rc.useWrapper ? <ChatWithKey /> : rc.element;
+            if (rc.path.startsWith("/admin/")) {
+              el = <RequireAdmin>{el}</RequireAdmin>;
+            }
+            return <Route key={rc.path} path={rc.path} element={el} />;
+          })}
+        </Routes>
+      </Suspense>
+    </PoliceRouteBoundary>
   );
 
   return (
@@ -152,6 +159,7 @@ export default function MainLayout() {
             collapsed={collapsed}
             onToggle={toggleCollapsed}
             isMobile={isMobile}
+            isPoliceRoute={isPoliceRoute}
           />
         )}
 
@@ -165,7 +173,7 @@ export default function MainLayout() {
           }}
         >
           {/* Mobile overlay backdrop */}
-          {isMobile && !collapsed && (
+          {!isPoliceRoute && isMobile && !collapsed && (
             <div
               onClick={toggleCollapsed}
               style={{
@@ -177,12 +185,16 @@ export default function MainLayout() {
             />
           )}
 
-          <Sidebar
-            selectedKey={selectedKey}
-            collapsed={collapsed}
-            onToggle={toggleCollapsed}
-            isMobile={isMobile}
-          />
+          {!isPoliceRoute && (
+            <Sidebar
+              selectedKey={selectedKey ?? ""}
+              collapsed={collapsed}
+              onToggle={toggleCollapsed}
+              isMobile={isMobile}
+            />
+          )}
+
+          {isPoliceRoute && !isPoliceWorkbenchRoute && <PoliceSkillRail />}
 
           {/* Main content area */}
           <Layout

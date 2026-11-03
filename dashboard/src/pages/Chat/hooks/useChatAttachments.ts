@@ -1,10 +1,18 @@
-import { useCallback, useRef, useState } from "react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type { ChangeEvent, ClipboardEvent, DragEvent } from "react";
 import { message as antMessage } from "antd";
 import { useTranslation } from "react-i18next";
 import { uploadFile } from "../../../api/modules/upload";
 import { agentAttachmentAccessUrl } from "../../../utils/toolMediaBlocks";
 import type { ChatAttachment } from "./useChat";
+import * as composerDraftStore from "./composerDraftStore";
+import { makeContextKey } from "../utils/workbenchContext";
 import {
   CHAT_ACCEPT_ATTR,
   CHAT_MAX_ATTACHMENT_BYTES,
@@ -12,9 +20,34 @@ import {
   isAcceptedChatFile,
 } from "../utils/chatAttachments";
 
-export function useChatAttachments(agentId: string | null | undefined) {
+const EMPTY_ATTACHMENTS: readonly ChatAttachment[] = Object.freeze([]);
+
+export function useChatAttachments(
+  agentId: string | null | undefined,
+  threadId?: string | null,
+) {
   const { t } = useTranslation();
-  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+  const contextKey = useMemo(
+    () =>
+      agentId ? makeContextKey({ agentId, threadId: threadId ?? null }) : "",
+    [agentId, threadId],
+  );
+  const attachments = useSyncExternalStore(
+    useCallback(
+      (listener: () => void) =>
+        contextKey
+          ? composerDraftStore.subscribe(contextKey, listener)
+          : () => undefined,
+      [contextKey],
+    ),
+    useCallback(
+      () =>
+        contextKey
+          ? composerDraftStore.getSnapshot(contextKey).attachments
+          : EMPTY_ATTACHMENTS,
+      [contextKey],
+    ),
+  );
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,7 +106,12 @@ export function useChatAttachments(agentId: string | null | undefined) {
             } satisfies ChatAttachment;
           }),
         );
-        setAttachments((prev) => [...prev, ...results]);
+        if (contextKey) {
+          composerDraftStore.setAttachments(contextKey, [
+            ...composerDraftStore.getSnapshot(contextKey).attachments,
+            ...results,
+          ]);
+        }
       } catch (err: unknown) {
         antMessage.error(
           (err as Error).message || t("upload.failed", "Upload failed"),
@@ -82,7 +120,7 @@ export function useChatAttachments(agentId: string | null | undefined) {
         setUploading(false);
       }
     },
-    [agentId, t],
+    [agentId, t, contextKey],
   );
 
   const handleFileSelect = useCallback(() => {
@@ -99,13 +137,23 @@ export function useChatAttachments(agentId: string | null | undefined) {
     [processFiles],
   );
 
-  const removeAttachment = useCallback((index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+  const removeAttachment = useCallback(
+    (index: number) => {
+      if (!contextKey) return;
+      composerDraftStore.setAttachments(
+        contextKey,
+        composerDraftStore
+          .getSnapshot(contextKey)
+          .attachments.filter((_, i) => i !== index),
+      );
+    },
+    [contextKey],
+  );
 
   const clearAttachments = useCallback(() => {
-    setAttachments([]);
-  }, []);
+    if (!contextKey) return;
+    composerDraftStore.setAttachments(contextKey, []);
+  }, [contextKey]);
 
   const handlePaste = useCallback(
     (e: ClipboardEvent) => {

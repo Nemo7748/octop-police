@@ -17,6 +17,7 @@ interface ChatDockPanelsProps {
   agentId: string;
   filePaths: string[];
   initialPath?: string | null;
+  revision?: number;
   browserSessionId: string | null;
   browserEnvironment: DisplayEnvironment;
   browserSessionState: string;
@@ -48,6 +49,7 @@ export default function ChatDockPanels({
   agentId,
   filePaths,
   initialPath,
+  revision,
   browserSessionId,
   browserEnvironment,
   browserSessionState,
@@ -130,6 +132,7 @@ export default function ChatDockPanels({
             agentId={agentId}
             filePaths={filePaths}
             initialPath={initialPath}
+            revision={revision}
             browserEnvironment={browserEnvironment}
           />
         </>
@@ -160,6 +163,7 @@ export default function ChatDockPanels({
             agentId={agentId}
             filePaths={filePaths}
             initialPath={initialPath}
+            revision={revision}
             browserEnvironment={browserEnvironment}
           />
         </>

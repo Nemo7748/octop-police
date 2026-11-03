@@ -1,5 +1,6 @@
 {
   "id": "cvm-ai-doctor",
+  "catalog_visible": false,
   "label": {
     "zh": "系统医生",
     "en": "System Doctor"

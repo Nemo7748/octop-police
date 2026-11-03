@@ -30,6 +30,8 @@ interface FilePanelContentProps {
   filePaths: string[];
   /** When set, opens on this path instead of the latest written one. */
   initialPath?: string | null;
+  /** External revision from the preview controller; bumping re-fetches content. */
+  revision?: number;
 }
 
 /**
@@ -41,6 +43,7 @@ export default function FilePanelContent({
   agentId,
   filePaths,
   initialPath,
+  revision,
 }: FilePanelContentProps) {
   const { t } = useTranslation();
   const normalizedPaths = useMemo(
@@ -115,7 +118,7 @@ export default function FilePanelContent({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolvedPath, apiFilePath, agentId, isText, refreshToken]);
+  }, [resolvedPath, apiFilePath, agentId, isText, refreshToken, revision]);
 
   const refresh = useCallback(() => {
     setEditMode(false);

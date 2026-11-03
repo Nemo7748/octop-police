@@ -1,0 +1,57 @@
+{
+  "id": "police-video-geo-location",
+  "catalog_visible": true,
+  "group": "police-development",
+  "order": 3,
+  "label": {
+    "zh": "监控视频经纬度定位",
+    "en": "Video Geo Locator"
+  },
+  "description": {
+    "zh": "根据点位、经纬度和视频地址或截图，生成自包含的地图点位 HTML；不接入真实监控，不默认请求外部地图服务。",
+    "en": "Build self-contained map HTML from points, coordinates and clips; no real camera feeds, no external map requests by default."
+  },
+  "welcome_message": {
+    "zh": "提供点位与经纬度，我来生成定位点位图",
+    "en": "Share points and coordinates — I'll build the locator map"
+  },
+  "icon_name": "map-pin",
+  "color": "#059669",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成点位定位图",
+        "en": "Build locator map"
+      },
+      "description": {
+        "zh": "输入：点位清单（名称、经纬度、视频地址或截图说明）。预期产物：outbound/<task>/ 下的 map.html（自包含点位图与点位详情）",
+        "en": "Input: point list (name, lat/lng, clip refs). Output: self-contained map.html under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请生成监控点位定位页面。\n\n点位清单（名称、经纬度、视频地址或截图说明）：\n\n预期产物：在 outbound/<task>/ 下生成自包含 map.html，展示点位分布与详情（含视频占位区）。不接入真实监控流，不默认请求外部地图服务。",
+        "en": "Please build a camera point locator page.\n\nPoints (name, lat/lng, clip refs):\n\nExpected output: self-contained map.html under outbound/<task>/ showing point distribution and details. No real feeds, no external map requests by default."
+      },
+      "color": "#d1fae5",
+      "icon_name": "map-pin"
+    },
+    {
+      "title": {
+        "zh": "整理点位台账",
+        "en": "Organize points"
+      },
+      "description": {
+        "zh": "粘贴零散点位信息，整理为规范台账并标注缺失字段",
+        "en": "Paste scattered point info; get a clean ledger with gaps flagged"
+      },
+      "prompt": {
+        "zh": "请把以下监控点位信息整理为规范台账（名称、经纬度、状态、备注），标注缺失或可疑字段，并生成台账 JSON 文件（写入 outbound/<task>/）：\n\n",
+        "en": "Please organize these point records into a clean ledger (name, lat/lng, status, notes), flag gaps, and write the JSON file into outbound/<task>/:\n\n"
+      },
+      "color": "#ecfdf5",
+      "icon_name": "list-checks"
+    }
+  ]
+}

@@ -82,6 +82,7 @@ include = [
     "src/octop/**/*.png",
     "src/octop/dashboard/**/*",
     "src/octop/infra/agents/experts/library/**/*",
+    "src/octop/infra/agents/builtin_skills/library/**/*",
     "src/octop/infra/agents/subagents/library/**/*",
     "src/octop/infra/agents/subagents/divisions.json",
     "src/octop/infra/desktop/scripts/**/*",
@@ -111,6 +112,7 @@ files = ["src/octop"]
 exclude = [
     "src/octop/dashboard/",
     "src/octop/infra/agents/experts/library/",
+    "src/octop/infra/agents/builtin_skills/library/",
     "src/octop/infra/agents/subagents/library/",
 ]
 

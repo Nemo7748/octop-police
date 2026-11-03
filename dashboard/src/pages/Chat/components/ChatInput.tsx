@@ -3,6 +3,8 @@ import {
   useRef,
   useCallback,
   useEffect,
+  useMemo,
+  useSyncExternalStore,
   forwardRef,
   useImperativeHandle,
 } from "react";
@@ -25,6 +27,30 @@ import { useChatAttachments } from "../hooks/useChatAttachments";
 import { useSlashMentionInput } from "../hooks/useSlashMentionInput";
 import { stripThinkingTags } from "../utils/chatAttachments";
 import { readInputDraft, writeInputDraft } from "../hooks/chatStore";
+import {
+  clearSubmittedSnapshot,
+  getSnapshot as getComposerDraft,
+  setPendingGuidance,
+  subscribe as subscribeComposerDraft,
+} from "../hooks/composerDraftStore";
+import {
+  subscribe as subscribeChatSession,
+  getSnapshot as getChatSessionSnapshot,
+} from "../hooks/chatStore";
+
+const EMPTY_GUIDANCE: readonly string[] = Object.freeze([]);
+import { makeContextKey } from "../utils/workbenchContext";
+import { useConversationReferences } from "../hooks/useConversationReferences";
+import { referenceToAttachment } from "../utils/conversationReferences";
+import {
+  computePlanFingerprint,
+  useExecutionMode,
+} from "../hooks/useExecutionMode";
+import type { ComposerResourceSnapshot, SendReceipt } from "../workbenchTypes";
+import RoleSelector from "./RoleSelector";
+import ExecutionModeSelector from "./ExecutionModeSelector";
+import PlanConfirmationCard from "./PlanConfirmationCard";
+import wbStyles from "../workbench.module.less";
 import styles from "../index.module.less";
 
 /** Imperative handle exposed via ref for programmatic text injection. */
@@ -33,7 +59,10 @@ export interface ChatInputHandle {
 }
 
 interface ChatInputProps {
-  onSend: (text: string, attachments?: ChatAttachment[]) => void;
+  onSend: (
+    text: string,
+    attachments?: ChatAttachment[],
+  ) => Promise<SendReceipt> | SendReceipt | void;
   onCancel: () => void;
   onNewChat: () => void;
   onUserInput?: () => void;
@@ -68,6 +97,8 @@ interface ChatInputProps {
   defaultModel?: string | null;
   contextUsedTokens?: number | null;
   contextMaxTokens?: number;
+  roleAgentId?: string | null;
+  onRoleChange?: (agentId: string) => void;
 }
 
 const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
@@ -103,6 +134,8 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       defaultModel,
       contextUsedTokens = null,
       contextMaxTokens = 128_000,
+      roleAgentId = null,
+      onRoleChange,
     },
     ref,
   ) {
@@ -201,15 +234,77 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       handleFileSelect,
       handleFileChange,
       removeAttachment,
-      clearAttachments,
+
       handlePaste,
       handleDragEnter,
       handleDragLeave,
       handleDragOver,
       handleDrop,
-    } = useChatAttachments(agentId);
+    } = useChatAttachments(agentId, threadId);
+    const {
+      references,
+      files: referenceFiles,
+      invalidPaths: invalidReferencePaths,
+      addReference,
+      removeReference,
+      validateReferences,
+    } = useConversationReferences(agentId, threadId);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const submitRef = useRef<() => void>(() => {});
+    const workbenchContextKey = agentId
+      ? makeContextKey({ agentId, threadId: threadId ?? null })
+      : "";
+    const execution = useExecutionMode(workbenchContextKey);
+    const pendingGuidance = useSyncExternalStore(
+      useCallback(
+        (listener: () => void) =>
+          workbenchContextKey
+            ? subscribeComposerDraft(workbenchContextKey, listener)
+            : () => undefined,
+        [workbenchContextKey],
+      ),
+      useCallback(
+        () =>
+          workbenchContextKey
+            ? getComposerDraft(workbenchContextKey).pendingGuidance
+            : EMPTY_GUIDANCE,
+        [workbenchContextKey],
+      ),
+    );
+    const runStatus = useSyncExternalStore(
+      useCallback(
+        (listener: () => void) =>
+          threadId ? subscribeChatSession(threadId, listener) : () => undefined,
+        [threadId],
+      ),
+      useCallback(
+        () =>
+          threadId
+            ? getChatSessionSnapshot(threadId).runStatus
+            : ("unknown" as const),
+        [threadId],
+      ),
+    );
+    const currentResources = useMemo<ComposerResourceSnapshot>(
+      () => ({
+        roleAgentId: roleAgentId ?? agentId ?? null,
+        model: selectedModel ?? defaultModel ?? null,
+        skills: selectedSkills,
+        connectors: selectedConnectors,
+        references,
+        attachmentCount: attachments.length,
+      }),
+      [
+        roleAgentId,
+        agentId,
+        selectedModel,
+        defaultModel,
+        selectedSkills,
+        selectedConnectors,
+        references,
+        attachments.length,
+      ],
+    );
 
     const MIN_TEXTAREA_HEIGHT = isMobile ? 42 : 78;
 
@@ -226,11 +321,14 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       slashMenuGroups,
       slashPickerGroups,
       slashMenuItems,
+      slashSkillItems,
+      slashCombinedFlat,
       mentionItems,
       runSlashCommand,
       matchSlashCommand,
       handleMentionSelect,
       handleSlashSelect,
+      handleCombinedSelect,
       handleTextChange,
       handleKeyDown,
     } = useSlashMentionInput({
@@ -243,6 +341,8 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       availableSkills,
       availableConnectors,
       availableAgents,
+      availableFiles: referenceFiles,
+      onReferenceSelect: addReference,
       agentId,
       selectedSkills,
       selectedConnectors,
@@ -258,44 +358,110 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       enterToSend: !isMobile,
     });
 
-    const submitMessage = useCallback(() => {
-      const trimmed = text.trim();
-      if ((!trimmed && attachments.length === 0) || disabled) return;
-      const slashItem = matchSlashCommand(trimmed);
-      if (slashItem && slashItem.spec.client_action !== "none") {
-        runSlashCommand(slashItem);
-        return;
-      }
-      const ta = textareaRef.current;
-      const prevHeight = ta ? ta.getBoundingClientRect().height : 0;
-      onSend(trimmed, attachments.length > 0 ? attachments : undefined);
-      setText("");
-      writeInputDraft(agentId, threadId, "");
-      clearAttachments();
-      userHasEditedRef.current = false;
-      prevInitialTextRef.current = "";
-      requestAnimationFrame(() => {
-        if (ta && prevHeight > MIN_TEXTAREA_HEIGHT) {
-          ta.style.transition = "none";
-          ta.style.height = `${prevHeight}px`;
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-          ta.offsetHeight;
-          ta.style.transition = "";
-          ta.style.height = `${MIN_TEXTAREA_HEIGHT}px`;
+    const submitMessage = useCallback(
+      async (forceExecute = false) => {
+        const trimmed = text.trim();
+        if (
+          (!trimmed && attachments.length === 0 && references.length === 0) ||
+          disabled
+        ) {
+          return;
         }
-      });
-    }, [
-      text,
-      attachments,
-      onSend,
-      disabled,
-      matchSlashCommand,
-      runSlashCommand,
-      clearAttachments,
-      MIN_TEXTAREA_HEIGHT,
-      agentId,
-      threadId,
-    ]);
+        const slashItem = matchSlashCommand(trimmed);
+        if (slashItem && slashItem.spec.client_action !== "none") {
+          runSlashCommand(slashItem);
+          return;
+        }
+        if (execution.mode === "plan" && !forceExecute) {
+          execution.beginPlan(trimmed, currentResources);
+          return;
+        }
+        if (isStreaming && !forceExecute) {
+          if (trimmed && workbenchContextKey) {
+            setPendingGuidance(workbenchContextKey, [
+              ...getComposerDraft(workbenchContextKey).pendingGuidance,
+              trimmed,
+            ]);
+            setText("");
+            writeInputDraft(agentId, threadId, "");
+          }
+          return;
+        }
+        const ta = textareaRef.current;
+        const prevHeight = ta ? ta.getBoundingClientRect().height : 0;
+        const snapshotAttachments =
+          attachments.length > 0 ? [...attachments] : [];
+        let validReferences = references;
+        if (references.length > 0 && agentId) {
+          try {
+            const validation = await validateReferences();
+            if (validation.invalid.length > 0) {
+              antMessage.error(t("policeWorkbench.references.invalid"));
+              return;
+            }
+            validReferences = validation.valid;
+          } catch {
+            antMessage.error(t("policeWorkbench.references.invalid"));
+            return;
+          }
+        }
+        const referenceAttachments = agentId
+          ? validReferences.map((reference) =>
+              referenceToAttachment(agentId, reference),
+            )
+          : [];
+        const allAttachments = [
+          ...snapshotAttachments,
+          ...referenceAttachments,
+        ];
+        const receipt = await onSend(
+          trimmed,
+          allAttachments.length > 0 ? allAttachments : undefined,
+        );
+        if (receipt && receipt.status !== "accepted") {
+          return;
+        }
+        if (agentId) {
+          clearSubmittedSnapshot(
+            makeContextKey({ agentId, threadId: threadId ?? null }),
+            { references: validReferences, attachments: snapshotAttachments },
+          );
+        }
+        setText("");
+        writeInputDraft(agentId, threadId, "");
+        userHasEditedRef.current = false;
+        prevInitialTextRef.current = "";
+        requestAnimationFrame(() => {
+          if (ta && prevHeight > MIN_TEXTAREA_HEIGHT) {
+            ta.style.transition = "none";
+            ta.style.height = `${prevHeight}px`;
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            ta.offsetHeight;
+            ta.style.transition = "";
+            ta.style.height = `${MIN_TEXTAREA_HEIGHT}px`;
+          }
+        });
+      },
+      [
+        text,
+        attachments,
+        references,
+        onSend,
+        disabled,
+        matchSlashCommand,
+        runSlashCommand,
+
+        MIN_TEXTAREA_HEIGHT,
+        agentId,
+        threadId,
+        validateReferences,
+        t,
+        execution,
+        currentResources,
+        isStreaming,
+        workbenchContextKey,
+      ],
+    );
 
     submitRef.current = submitMessage;
 
@@ -384,6 +550,9 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
           <ChatInputPreviewBar
             attachments={attachments}
             uploading={uploading}
+            references={references}
+            invalidReferencePaths={invalidReferencePaths}
+            onRemoveReference={removeReference}
             selectedSkills={selectedSkills}
             selectedConnectors={selectedConnectors}
             selectedTargetAgents={selectedTargetAgents}
@@ -398,6 +567,87 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
             onModelChange={onModelChange}
           />
 
+          {execution.pendingPlan && (
+            <PlanConfirmationCard
+              goalText={execution.pendingPlan.goalText}
+              resources={execution.pendingPlan.resources}
+              stale={
+                computePlanFingerprint(text.trim(), currentResources) !==
+                execution.pendingPlan.fingerprint
+              }
+              onConfirm={() => {
+                execution.confirmPlan(text.trim(), currentResources, () => {
+                  void submitMessage(true);
+                });
+              }}
+              onCancel={execution.cancelPlan}
+            />
+          )}
+          {execution.planCancelled && !execution.pendingPlan && (
+            <p className={wbStyles.planNotice} role="status">
+              {t("policeWorkbench.plan.cancelled")}
+            </p>
+          )}
+
+          {pendingGuidance.length > 0 && (
+            <div
+              className={wbStyles.guidanceQueue}
+              data-testid="guidance-queue"
+            >
+              <p className={wbStyles.planNotice} role="status">
+                {t("policeWorkbench.execution.queued")}
+              </p>
+              <ul className={wbStyles.guidanceList}>
+                {pendingGuidance.map((guidance, index) => (
+                  <li key={`${index}-${guidance}`}>
+                    <span className={wbStyles.guidanceText}>{guidance}</span>
+                    <button
+                      type="button"
+                      className={wbStyles.fileLink}
+                      onClick={() =>
+                        setPendingGuidance(
+                          workbenchContextKey,
+                          pendingGuidance.filter((_, i) => i !== index),
+                        )
+                      }
+                    >
+                      {t("policeWorkbench.execution.revokeGuidance")}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {onRoleChange && (
+            <div className={wbStyles.metaRow}>
+              {(isStreaming ||
+                runStatus === "failed" ||
+                runStatus === "cancelled") && (
+                <span
+                  className={wbStyles.runStatusText}
+                  data-status={isStreaming ? "running" : runStatus}
+                  role="status"
+                >
+                  {isStreaming
+                    ? t("policeWorkbench.runStatus.running")
+                    : t(`policeWorkbench.runStatus.${runStatus}`)}
+                </span>
+              )}
+              <RoleSelector
+                agents={availableAgents}
+                value={roleAgentId ?? agentId ?? null}
+                onChange={onRoleChange}
+                disabled={disabled}
+              />
+              <ExecutionModeSelector
+                value={execution.mode}
+                onChange={execution.setMode}
+                disabled={disabled}
+              />
+            </div>
+          )}
+
           <div className={styles.inputRow} style={{ position: "relative" }}>
             <textarea
               ref={textareaRef}
@@ -409,10 +659,7 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
               }}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder={t(
-                "chatWelcome.inputPlaceholder",
-                "Message Octop...",
-              )}
+              placeholder={t("policeWorkbench.composer.placeholder")}
               rows={1}
               disabled={disabled}
               enterKeyHint={isMobile ? "enter" : undefined}
@@ -457,6 +704,7 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
               skills={availableSkills ?? []}
               connectors={availableConnectors ?? []}
               agents={mentionAgents}
+              files={referenceFiles}
               activeIndex={mentionMenuIndex}
               onSelect={handleMentionSelect}
               onHover={setMentionMenuIndex}
@@ -464,12 +712,32 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
           )}
 
           {/* Slash command inline menu */}
-          {slashMenuOpen && slashMenuFlat.length > 0 && (
+          {slashMenuOpen && slashCombinedFlat.length > 0 && (
             <div className={styles.slashMenu}>
+              {slashSkillItems.length > 0 && (
+                <div>
+                  <div className={styles.mentionCategory}>
+                    {t("policeWorkbench.references.skills")}
+                  </div>
+                  {slashSkillItems.map((entry, index) => (
+                    <button
+                      key={entry.slug}
+                      type="button"
+                      className={`${styles.mentionItem} ${
+                        slashMenuIndex === index ? styles.mentionItemActive : ""
+                      }`}
+                      onMouseEnter={() => setSlashMenuIndex(index)}
+                      onClick={() => handleCombinedSelect(entry)}
+                    >
+                      <span className={styles.mentionLabel}>{entry.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
               <SlashCommandMenu
                 groups={slashMenuGroups}
                 flatItems={slashMenuFlat}
-                activeIndex={slashMenuIndex}
+                activeIndex={slashMenuIndex - slashSkillItems.length}
                 disabled={isStreaming || disabled}
                 variant="inline"
                 itemsGridClassName={styles.slashMenuGrid}
@@ -535,7 +803,7 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
             onPolish={() => void handlePolish()}
             onToggleVoice={() => toggleVoice()}
             onCancel={onCancel}
-            onSubmit={submitMessage}
+            onSubmit={() => void submitMessage()}
           />
 
           <input

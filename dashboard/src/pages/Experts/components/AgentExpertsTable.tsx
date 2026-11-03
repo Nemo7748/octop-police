@@ -261,7 +261,7 @@ export default function AgentExpertsTable({
       ),
     },
     {
-      title: t("experts.table.agentId", "专家 ID"),
+      title: t("experts.table.agentId", "智能体 ID"),
       dataIndex: "agent_id",
       width: 100,
       ellipsis: true,

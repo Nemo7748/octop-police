@@ -160,7 +160,7 @@
       "owner": "归属用户",
       "chat_user": "对话用户",
       "workspace": "工作区",
-      "template": "专家模板",
+      "template": "智能体模板",
       "model": "模型",
       "session": "会话",
       "channel": "渠道",
@@ -316,7 +316,7 @@
     "SKILL_IMPORT_UNSUPPORTED_URL": "不支持该技能 URL 来源。",
     "SKILL_IMPORT_FAILED": "技能导入失败：{reason}",
     "SKILL_ALREADY_EXISTS": "技能 {name} 已存在，如需覆盖请启用 overwrite。",
-    "EXPERT_MARKET_FAILED": "专家市场暂时不可用，请稍后重试。",
+    "EXPERT_MARKET_FAILED": "智能体市场暂时不可用，请稍后重试。",
     "DESKTOP_SESSION_LIMIT": "远程桌面并发连接已达上限（最多 {limit} 路），请关闭其他连接后重试。",
     "DESKTOP_CAPTURE_FAILED": "连续抓屏失败。Linux 服务器请重启虚拟桌面；macOS 请在系统设置中授予屏幕录制与辅助功能权限后重连。"
   },
@@ -476,8 +476,8 @@
     }
   },
   "agent_errors": {
-    "no_models_configured": "未配置可用模型，请前往「设置 → 模型」配置 Provider，然后重新启用此专家。",
-    "model_ref_unavailable": "默认模型不可用或已禁用，请检查「设置 → 模型」或修改此专家的默认模型后重试。"
+    "no_models_configured": "未配置可用模型，请前往「设置 → 模型」配置 Provider，然后重新启用此智能体。",
+    "model_ref_unavailable": "默认模型不可用或已禁用，请检查「设置 → 模型」或修改此智能体的默认模型后重试。"
   },
   "attachment": {
     "header": "[附件] {filename}",

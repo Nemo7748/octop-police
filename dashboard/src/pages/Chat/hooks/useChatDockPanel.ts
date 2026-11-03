@@ -77,6 +77,12 @@ export function useChatDockPanel(isMobile: boolean) {
   const handleClose = useCallback(() => {
     userDismissedRef.current = true;
     setDockOpen(false);
+  }, []);
+
+  /** 仅在上下文失效或用户明确清除时调用：清空当前预览选择。 */
+  const clearPreviewSelection = useCallback(() => {
+    userDismissedRef.current = true;
+    setDockOpen(false);
     setFilePath(null);
   }, []);
 
@@ -157,6 +163,7 @@ export function useChatDockPanel(isMobile: boolean) {
     isResizing,
     handleResizeStart,
     handleClose,
+    clearPreviewSelection,
     handleModeChange,
     openFileAt,
     openFilePanel,

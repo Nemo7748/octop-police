@@ -1,6 +1,10 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { octopThreadsApi } from "../../../api/modules/octopThreads";
+import {
+  beginNavigationIntent,
+  isLatestNavigationIntent,
+} from "../../../utils/navigationIntent";
 import { pickPreferredSession, toSession, type Session } from "./useSessions";
 
 interface UseChatSessionActionsParams {
@@ -39,6 +43,7 @@ export function useChatSessionActions({
     setHasBrowserTool(false);
     const agent = resolvedAgentId;
     if (!agent) return;
+    beginNavigationIntent();
     navigate(`/chat/${agent}`);
   }, [navigate, resolvedAgentId, setSelectedModel, setHasBrowserTool]);
 
@@ -48,6 +53,7 @@ export function useChatSessionActions({
       if (!agent) return;
       if (id === activeThreadId) return;
       setSelectedModel(null);
+      beginNavigationIntent();
       void octopThreadsApi.rebind(agent, id).catch(() => {});
       navigate(`/chat/${agent}/${id}`);
       if (isMobile) setSidebarOpen(false);
@@ -65,6 +71,7 @@ export function useChatSessionActions({
   const navigateToAgent = useCallback(
     (agentId: string) => {
       if (!agentId) return;
+      const intentSeq = beginNavigationIntent();
       resetNavForAgentSwitch();
       navigate(`/chat/${agentId}`, { replace: true });
       setActiveAgent(agentId);
@@ -74,6 +81,7 @@ export function useChatSessionActions({
       void (async () => {
         try {
           const rows = await octopThreadsApi.list(agentId);
+          if (!isLatestNavigationIntent(intentSeq)) return;
           const preferred = pickPreferredSession(rows.map(toSession));
           if (preferred) {
             markInitialNavDone(agentId);
@@ -100,8 +108,9 @@ export function useChatSessionActions({
 
   const handleDeleteSession = useCallback(
     async (id: string) => {
+      const intentSeq = beginNavigationIntent();
       const deleted = await deleteSession(id);
-      if (!deleted) return;
+      if (!deleted || !isLatestNavigationIntent(intentSeq)) return;
       const agent = resolvedAgentId;
       if (id === activeThreadId && agent) {
         const remaining = sessions.filter((s) => s.id !== id);

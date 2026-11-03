@@ -1,5 +1,6 @@
 {
   "id": "ops-engineer",
+  "catalog_visible": false,
   "label": {
     "zh": "运维工程师 Ops",
     "en": "Ops · SRE Engineer"

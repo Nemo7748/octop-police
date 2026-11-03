@@ -1,5 +1,5 @@
 import { Spin } from "antd";
-import { Navigate } from "react-router-dom";
+import PoliceRouteBoundary from "./PoliceRouteBoundary";
 import { useUserRole } from "../hooks/useUserRole";
 
 interface Props {
@@ -7,9 +7,8 @@ interface Props {
 }
 
 /**
- * Wraps admin-only routes. Redirects to /chat for non-admins.
- * Shows a full-screen spinner while the role is loading to avoid
- * a flash of the admin page before the redirect fires.
+ * Wraps admin-only routes and keeps permission feedback on the target route.
+ * Shows a full-screen spinner while the role is loading.
  */
 export default function RequireAdmin({ children }: Props) {
   const role = useUserRole();
@@ -31,7 +30,7 @@ export default function RequireAdmin({ children }: Props) {
   }
 
   if (role !== "admin") {
-    return <Navigate to="/chat" replace />;
+    return <PoliceRouteBoundary status="forbidden" />;
   }
 
   return <>{children}</>;

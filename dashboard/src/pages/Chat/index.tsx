@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { PanelLeftOpen, GraduationCap } from "lucide-react";
-import { Tooltip } from "antd";
+import { Button, Modal, Space, Tooltip } from "antd";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useChat } from "./hooks/useChat";
 import { useSessions } from "./hooks/useSessions";
@@ -10,6 +10,8 @@ import * as chatStore from "./hooks/chatStore";
 import { formatRunUsage } from "./utils/chatMessages";
 import { useChatSidebarState } from "./hooks/useChatSidebarState";
 import { useChatDockPanel } from "./hooks/useChatDockPanel";
+import { useWorkbenchPreview } from "./hooks/useWorkbenchPreview";
+import { useTaskArtifacts } from "./hooks/useTaskArtifacts";
 import { useChatSend } from "./hooks/useChatSend";
 import { useChatNavigation } from "./hooks/useChatNavigation";
 import { useChatSessionActions } from "./hooks/useChatSessionActions";
@@ -36,16 +38,49 @@ import ChatDockPanels from "./components/ChatDockPanels";
 import { ChatFilePreviewProvider } from "./ChatFilePreviewContext";
 import ChatSidebarPanel from "./components/ChatSidebarPanel";
 import ChatComposerChrome from "./components/ChatComposerChrome";
-import { isAgentChatReady } from "../../utils/agentError";
+import PoliceWorkbenchShell from "./components/PoliceWorkbenchShell";
+import PoliceSkillRail from "./components/PoliceSkillRail";
+import WorkbenchStatusBar from "./components/WorkbenchStatusBar";
+import WorkspaceOverview from "./components/WorkspaceOverview";
+import PoliceHomeLauncher from "./components/PoliceHomeLauncher";
+import CreateFromExpertDrawer from "../Experts/components/CreateFromExpertDrawer";
+import {
+  usePoliceHomeCatalog,
+  type AgentInstanceSummary,
+  type PoliceHomeSourceKey,
+  type RecommendedSkill,
+} from "./hooks/usePoliceHomeCatalog";
+import { usePoliceAgentLaunch } from "./hooks/usePoliceAgentLaunch";
+import { launchRecommendedSkill } from "./utils/policeSkillLaunch";
+import { useWorkbenchUi } from "./hooks/useWorkbenchUi";
+import {
+  getSnapshot as getComposerDraft,
+  setPendingGuidance,
+} from "./hooks/composerDraftStore";
+import { makeContextKey } from "./utils/workbenchContext";
+import type { SendReceipt } from "./workbenchTypes";
+import {
+  formatAgentState,
+  isAgentChatReady,
+} from "../../utils/agentError";
+import { normalizeUiLocale } from "../../utils/localePrefs";
+import { beginNavigationIntent } from "../../utils/navigationIntent";
 import { promptNeedsUserInput } from "../../utils/quickInputPrefill";
+import type { WorkbenchNavigationState } from "../../routes/policeCapabilities";
 import styles from "./index.module.less";
+
+const EMPTY_AGENTS_BY_TEMPLATE: ReadonlyMap<
+  string,
+  readonly AgentInstanceSummary[]
+> = new Map();
 
 export default function ChatPage() {
   return <ChatPageInner />;
 }
 
 function ChatPageInner() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = normalizeUiLocale(i18n.language);
   const navigate = useNavigate();
   const location = useLocation();
   prefetchVoiceConfig();
@@ -131,8 +166,7 @@ function ChatPageInner() {
     void refreshAgents({ silent: true });
   }, [refreshAgents]);
 
-  const { quickCards: expertQuickCards, welcomeSuffix } =
-    useExpertChatWelcome(activeAgent);
+  const { welcomeSuffix } = useExpertChatWelcome(activeAgent);
   const { skills: chatSkills } = useSkills(
     agentChatReady && !agentsLoading ? resolvedAgentId ?? null : null,
   );
@@ -214,6 +248,7 @@ function ChatPageInner() {
     isResizing: dockIsResizing,
     handleResizeStart: dockHandleResizeStart,
     handleClose: handleDockClose,
+    clearPreviewSelection,
     handleModeChange: handleDockModeChange,
     openFilePanel,
     openFileAt,
@@ -359,15 +394,34 @@ function ChatPageInner() {
 
   // Wrap handleSend to intercept skill recording workflow keywords
   const wrappedHandleSend = useCallback(
-    (text: string, attachments?: ChatAttachment[]) => {
+    async (
+      text: string,
+      attachments?: ChatAttachment[],
+    ): Promise<SendReceipt> => {
       if (interceptUserMessage(text)) {
         // The workflow intercepted the message — don't send it to the agent
-        return;
+        return { status: "accepted" };
       }
-      handleSend(text, attachments);
+      return handleSend(text, attachments);
     },
     [interceptUserMessage, handleSend],
   );
+
+  // 执行中补充指导：当前流结束/取消后按顺序作为同一任务的新 turn 恰好提交一次。
+  const prevStreamingRef = useRef(false);
+  const guidanceContextKey = resolvedAgentId
+    ? makeContextKey({ agentId: resolvedAgentId, threadId: activeThreadId })
+    : "";
+  useEffect(() => {
+    const wasStreaming = prevStreamingRef.current;
+    prevStreamingRef.current = isStreaming;
+    if (!wasStreaming || isStreaming || !guidanceContextKey) return;
+    const queue = getComposerDraft(guidanceContextKey).pendingGuidance;
+    const next = queue[0];
+    if (!next) return;
+    setPendingGuidance(guidanceContextKey, queue.slice(1));
+    void wrappedHandleSend(next);
+  }, [isStreaming, guidanceContextKey, wrappedHandleSend]);
 
   const {
     handleNewChat,
@@ -396,6 +450,70 @@ function ChatPageInner() {
       }
     });
   }, [navigateToAgent]);
+
+  // PoliceBuddy home launcher (spec §2.1.3): three read-only sources feed
+  // the empty-session catalog; agent cards launch through the controller.
+  const {
+    state: homeCatalogState,
+    sourceStatus: homeCatalogSourceStatus,
+    reload: reloadCatalog,
+    reloadSource: reloadCatalogSource,
+  } = usePoliceHomeCatalog(resolvedAgentId ?? null);
+
+  const homeAgentsByTemplate = useMemo(
+    () =>
+      homeCatalogState.status === "ready" ||
+      homeCatalogState.status === "partial"
+        ? homeCatalogState.data.agentsByTemplate
+        : EMPTY_AGENTS_BY_TEMPLATE,
+    [homeCatalogState],
+  );
+
+  const reloadCatalogInstances = useCallback(() => {
+    reloadCatalogSource("instances" satisfies PoliceHomeSourceKey);
+  }, [reloadCatalogSource]);
+
+  const openNewSession = useCallback(
+    (agentId: string, prefill: string) => {
+      beginNavigationIntent();
+      resetNavForAgentSwitch();
+      navigate(`/chat/${agentId}`, {
+        replace: true,
+        state: prefill ? { prefillInput: prefill } : undefined,
+      });
+      setActiveAgent(agentId);
+      clearMessages();
+      if (isMobile) setSidebarOpen(false);
+    },
+    [
+      navigate,
+      resetNavForAgentSwitch,
+      setActiveAgent,
+      clearMessages,
+      isMobile,
+      setSidebarOpen,
+    ],
+  );
+
+  const agentLaunch = usePoliceAgentLaunch({
+    lang,
+    agentsByTemplate: homeAgentsByTemplate,
+    openNewSession,
+    reloadInstances: reloadCatalogInstances,
+  });
+
+  const handleLaunchSkill = useCallback(
+    (item: RecommendedSkill) => {
+      launchRecommendedSkill(item, {
+        lang,
+        agentId: resolvedAgentId,
+        chatSkills,
+        onSkillsChange: handleSkillsChange,
+        prefillComposer: (text) => chatInputRef.current?.setPrefillText(text),
+      });
+    },
+    [lang, resolvedAgentId, chatSkills, handleSkillsChange],
+  );
 
   const handlePromptClick = useCallback(
     (text: string) => {
@@ -473,47 +591,133 @@ function ChatPageInner() {
   );
 
   const hasMessages = messages.length > 0;
+  const { businessTag, setBusinessTag } = useWorkbenchUi();
+  const workbenchContext = useMemo(
+    () =>
+      resolvedAgentId
+        ? { agentId: resolvedAgentId, threadId: activeThreadId }
+        : null,
+    [resolvedAgentId, activeThreadId],
+  );
+  const guidanceContextKey = workbenchContext
+    ? makeContextKey(workbenchContext)
+    : "";
+  const previewController = useWorkbenchPreview(guidanceContextKey, {
+    filePath: filePanelPath,
+    handleClose: handleDockClose,
+    clearPreviewSelection,
+    openFileAt,
+  });
+  const { artifactChanges } = useTaskArtifacts(workbenchContext);
+  const { applyChanges: applyPreviewChanges } = previewController;
+  useEffect(() => {
+    if (
+      artifactChanges.status === "ready" ||
+      artifactChanges.status === "partial"
+    ) {
+      applyPreviewChanges(artifactChanges.data);
+    }
+  }, [artifactChanges, applyPreviewChanges]);
+  const handleStartWorkbench = useCallback(() => {
+    const textarea =
+      document.querySelector<HTMLTextAreaElement>("main textarea");
+    textarea?.focus();
+  }, []);
+
+  useEffect(() => {
+    const intent = (location.state as WorkbenchNavigationState | null)
+      ?.workbenchIntent;
+    if (!intent) return;
+    navigate(location.pathname, { replace: true, state: {} });
+    if (intent === "new-task") {
+      handleNewChat();
+    } else if (intent === "projects") {
+      setSidebarOpen(true);
+    } else if (intent === "library" && resolvedAgentId) {
+      openFilePanel();
+    } else if (intent === "focus-composer") {
+      handleStartWorkbench();
+    }
+  }, [
+    location.state,
+    location.pathname,
+    navigate,
+    handleNewChat,
+    setSidebarOpen,
+    resolvedAgentId,
+    openFilePanel,
+    handleStartWorkbench,
+  ]);
+
+  // 上下文切换：清除不属于新上下文的预览内容，保留各任务草稿。
+  useEffect(() => {
+    clearPreviewSelection();
+  }, [workbenchContext, clearPreviewSelection]);
 
   return (
     <ChatFilePreviewProvider openFilePreview={openFileAt}>
-      <div
-        className={`${styles.chatPage} ${
-          dockIsResizing ? styles.panelResizeActive : ""
-        }`}
+      <PoliceWorkbenchShell
+        skillRail={<PoliceSkillRail />}
+        directory={
+          <ChatSidebarPanel
+            isMobile={isMobile}
+            sidebarOpen={sidebarOpen}
+            sidebarWidth={sidebarWidth}
+            isSidebarResizing={isSidebarResizing}
+            sidebarElRef={sidebarElRef}
+            agents={agents}
+            sessions={sessions}
+            activeThreadId={activeThreadId}
+            resolvedAgentId={resolvedAgentId}
+            sessionsHasMore={sessionsHasMore}
+            sessionsLoadingMore={sessionsLoadingMore}
+            onLoadMoreSessions={handleLoadMoreSessions}
+            onFetchAllSessions={handleFetchAllSessions}
+            onSelectSession={(sessionId, agentId) => {
+              setActiveAgent(agentId);
+              handleSelectSession(sessionId);
+            }}
+            onAgentSelect={navigateToAgent}
+            onDeleteSession={handleDeleteSession}
+            onRenameSession={renameSession}
+            onPinSession={pinSession}
+            onSidebarOpenChange={setSidebarOpen}
+            onSidebarResizeStart={handleSidebarResizeStart}
+          />
+        }
+        preview={
+          <ChatDockPanels
+            slot="side"
+            hasBrowserTool={hasBrowserTool}
+            isMobile={isMobile}
+            dockOpen={dockOpen}
+            dockKind={dockKind}
+            dockMode={dockMode}
+            isResizing={dockIsResizing}
+            panelSizes={dockPanelSizes}
+            agentId={resolvedAgentId ?? ""}
+            filePaths={panelFilePaths}
+            initialPath={filePanelPath}
+            revision={previewController.revision}
+            browserSessionId={browserSessionId}
+            browserEnvironment={browserEnvironment}
+            browserSessionState={browserSessionState}
+            browserControlOwner={browserControlOwner}
+            onModeChange={handleDockModeChange}
+            onClose={handleDockClose}
+            onResizeStart={dockHandleResizeStart}
+            onToggleBrowser={toggleBrowserPanel}
+          />
+        }
+        statusBar={<WorkbenchStatusBar />}
       >
-        <ChatSidebarPanel
-          isMobile={isMobile}
-          sidebarOpen={sidebarOpen}
-          sidebarWidth={sidebarWidth}
-          isSidebarResizing={isSidebarResizing}
-          sidebarElRef={sidebarElRef}
-          agents={agents}
-          sessions={sessions}
-          activeThreadId={activeThreadId}
-          resolvedAgentId={resolvedAgentId}
-          sessionsHasMore={sessionsHasMore}
-          sessionsLoadingMore={sessionsLoadingMore}
-          onLoadMoreSessions={handleLoadMoreSessions}
-          onFetchAllSessions={handleFetchAllSessions}
-          onSelectSession={(sessionId, agentId) => {
-            setActiveAgent(agentId);
-            handleSelectSession(sessionId);
-          }}
-          onAgentSelect={navigateToAgent}
-          onDeleteSession={handleDeleteSession}
-          onRenameSession={renameSession}
-          onPinSession={pinSession}
-          onSidebarOpenChange={setSidebarOpen}
-          onSidebarResizeStart={handleSidebarResizeStart}
-        />
-
         {/* Main chat area */}
         <div
           className={`${styles.chatMain} ${
             dockOpen && dockMode === "bottom"
               ? styles.chatMainWithBottomPanel
               : ""
-          }`}
+          } ${dockIsResizing ? styles.panelResizeActive : ""}`}
         >
           {/* Mobile toolbar — quick actions; global Header handles logo / health / theme */}
           {isMobile && (
@@ -551,9 +755,28 @@ function ChatPageInner() {
               <WelcomeScreen
                 agentName={activeAgent?.name ?? null}
                 welcomeSuffix={welcomeSuffix}
-                quickCards={expertQuickCards}
+                quickCards={[]}
                 onPromptClick={handlePromptClick}
                 hideMascot={isStreaming}
+                workbenchOverview={
+                  <PoliceHomeLauncher
+                    state={homeCatalogState}
+                    sourceStatus={homeCatalogSourceStatus}
+                    onRetry={reloadCatalog}
+                    onRetrySource={reloadCatalogSource}
+                    onLaunchAgent={agentLaunch.launchAgentTemplate}
+                    onLaunchSkill={handleLaunchSkill}
+                    launchingAgentId={agentLaunch.launchingAgentId}
+                  >
+                    <WorkspaceOverview
+                      agentId={resolvedAgentId ?? null}
+                      context={workbenchContext}
+                      businessTag={businessTag}
+                      onBusinessTagChange={setBusinessTag}
+                      onOpenFile={openFileAt}
+                    />
+                  </PoliceHomeLauncher>
+                }
               />
             ) : (
               <MessageList
@@ -626,6 +849,8 @@ function ChatPageInner() {
             defaultModel={activeAgent?.default_model ?? null}
             contextUsedTokens={contextUsedTokens}
             contextMaxTokens={contextMaxTokens}
+            roleAgentId={resolvedAgentId ?? null}
+            onRoleChange={navigateToAgent}
           />
 
           {/* Shared dock — bottom slot (file / browser / preview) */}
@@ -641,6 +866,7 @@ function ChatPageInner() {
             agentId={resolvedAgentId ?? ""}
             filePaths={panelFilePaths}
             initialPath={filePanelPath}
+            revision={previewController.revision}
             browserSessionId={browserSessionId}
             browserEnvironment={browserEnvironment}
             browserSessionState={browserSessionState}
@@ -651,36 +877,47 @@ function ChatPageInner() {
             onToggleBrowser={toggleBrowserPanel}
           />
         </div>
+      </PoliceWorkbenchShell>
 
-        <ChatDockPanels
-          slot="side"
-          hasBrowserTool={hasBrowserTool}
-          isMobile={isMobile}
-          dockOpen={dockOpen}
-          dockKind={dockKind}
-          dockMode={dockMode}
-          isResizing={dockIsResizing}
-          panelSizes={dockPanelSizes}
-          agentId={resolvedAgentId ?? ""}
-          filePaths={panelFilePaths}
-          initialPath={filePanelPath}
-          browserSessionId={browserSessionId}
-          browserEnvironment={browserEnvironment}
-          browserSessionState={browserSessionState}
-          browserControlOwner={browserControlOwner}
-          onModeChange={handleDockModeChange}
-          onClose={handleDockClose}
-          onResizeStart={dockHandleResizeStart}
-          onToggleBrowser={toggleBrowserPanel}
-        />
+      <AgentProfileDrawer
+        open={agentProfileOpen}
+        agent={activeAgent}
+        isMobile={isMobile}
+        onClose={() => setAgentProfileOpen(false)}
+      />
 
-        <AgentProfileDrawer
-          open={agentProfileOpen}
-          agent={activeAgent}
-          isMobile={isMobile}
-          onClose={() => setAgentProfileOpen(false)}
-        />
-      </div>
+      {/* Home launcher: create-from-template drawer (shared with Experts page). */}
+      <CreateFromExpertDrawer
+        open={agentLaunch.drawerOpen}
+        expert={agentLaunch.drawerExpert}
+        lang={lang}
+        onClose={agentLaunch.closeDrawer}
+        onCreated={agentLaunch.handleDrawerCreated}
+      />
+
+      {/* Home launcher: multi-instance disambiguation (user picks explicitly). */}
+      <Modal
+        open={agentLaunch.pendingSelection !== null}
+        title={t("policeWorkbench.home.selectInstance")}
+        onCancel={agentLaunch.cancelSelection}
+        footer={null}
+        width={440}
+      >
+        <Space direction="vertical" style={{ width: "100%" }}>
+          {(agentLaunch.pendingSelection?.instances ?? []).map((inst) => (
+            <Button
+              key={inst.agentId}
+              block
+              onClick={() => agentLaunch.chooseInstance(inst)}
+            >
+              {inst.name}
+              <span style={{ opacity: 0.65, marginLeft: 8 }}>
+                {formatAgentState(inst.state, t)}
+              </span>
+            </Button>
+          ))}
+        </Space>
+      </Modal>
     </ChatFilePreviewProvider>
   );
 }

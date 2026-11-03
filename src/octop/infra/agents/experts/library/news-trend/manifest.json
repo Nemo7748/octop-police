@@ -1,5 +1,6 @@
 {
   "id": "news-trend",
+  "catalog_visible": false,
   "label": {
     "zh": "热点记者",
     "en": "Hot News Reporter"

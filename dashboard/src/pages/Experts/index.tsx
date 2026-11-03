@@ -2,7 +2,9 @@
  * Experts page — redesigned as Agents Management Centre.
  *
  * Tab A: user's experts, shown as a card grid with start/stop/edit/delete.
- * Tab B: built-in expert templates, shown as a card grid with create-from-template drawer.
+ * Tab B: built-in agent templates from the same /experts source as the home
+ *        launcher, narrowed and ordered by group/order; shown as a card grid
+ *        with create-from-template drawer.
  * Tab C: SkillHub expert market, shown as remote skillset cards.
  *
  * API (all via request() which already prefixes /api):
@@ -33,6 +35,10 @@ import EditAgentDrawer from "./components/EditAgentDrawer";
 import CreateFromExpertDrawer from "./components/CreateFromExpertDrawer";
 import AgentExpertsTable from "./components/AgentExpertsTable";
 import ExpertMarketTab from "./components/ExpertMarketTab";
+import {
+  buildAgentGroups,
+  collectTemplates,
+} from "../Chat/hooks/usePoliceHomeCatalog";
 import styles from "./index.module.less";
 
 type TabKey = "my" | "library" | "market";
@@ -46,6 +52,28 @@ function loadViewMode(): ViewMode {
 
 async function fetchExpertLibrary(): Promise<ExpertSummary[]> {
   return request<ExpertSummary[]>("/experts");
+}
+
+function projectLibraryCatalog(rows: unknown[]): {
+  experts: ExpertSummary[];
+  unsupported: boolean;
+} {
+  const { valid, rawCount } = collectTemplates(rows);
+  if (rawCount > 0 && valid.length === 0) {
+    return { experts: [], unsupported: true };
+  }
+  const experts = buildAgentGroups(valid).flatMap((bucket) =>
+    bucket.agents.map(
+      (agent): ExpertSummary => ({
+        id: agent.expertId,
+        label: agent.label,
+        description: agent.description,
+        icon_name: agent.iconName,
+        color: agent.color,
+      }),
+    ),
+  );
+  return { experts, unsupported: false };
 }
 
 async function fetchInstalledExpertIds(): Promise<Set<string>> {
@@ -70,13 +98,15 @@ export default function ExpertsPage() {
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [agentList, expertList, installedIds] = await Promise.all([
+      const [agentList, expertRows, installedIds] = await Promise.all([
         request<OctopAgent[]>("/agents"),
         fetchExpertLibrary(),
         fetchInstalledExpertIds(),
       ]);
+      const projected = projectLibraryCatalog(expertRows);
       setLocalAgents(agentList);
-      setExperts(expertList);
+      setExperts(projected.experts);
+      setCatalogUnsupported(projected.unsupported);
       setAgentExpertIds(installedIds);
       await refreshAgents({ silent: true, force: true });
     } catch (err: unknown) {
@@ -97,13 +127,17 @@ export default function ExpertsPage() {
   // ── Built-in expert library ────────────────────────────────────
   const [experts, setExperts] = useState<ExpertSummary[]>([]);
   const [expertLoading, setExpertLoading] = useState(false);
+  const [catalogUnsupported, setCatalogUnsupported] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setExpertLoading(true);
     fetchExpertLibrary()
-      .then((data) => {
-        if (!cancelled) setExperts(data);
+      .then((rows) => {
+        if (cancelled) return;
+        const projected = projectLibraryCatalog(rows);
+        setExperts(projected.experts);
+        setCatalogUnsupported(projected.unsupported);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -339,6 +373,20 @@ export default function ExpertsPage() {
         </div>
       );
     }
+    if (catalogUnsupported) {
+      return (
+        <div className={styles.emptyState}>
+          <GraduationCap
+            size={48}
+            style={{ color: "var(--fn-text-tertiary)" }}
+          />
+          <div className={styles.emptyTitle}>
+            {t("policeWorkbench.home.catalogUnsupported")}
+          </div>
+          <div className={styles.emptyActions}>{refreshButton}</div>
+        </div>
+      );
+    }
     if (experts.length === 0) {
       return (
         <div className={styles.emptyState}>
@@ -375,7 +423,7 @@ export default function ExpertsPage() {
         </div>
       </>
     );
-  }, [experts, expertLoading, lang, agentExpertIds, refreshButton, t]);
+  }, [catalogUnsupported, experts, expertLoading, lang, agentExpertIds, refreshButton, t]);
 
   const marketContent = useMemo(
     () => (

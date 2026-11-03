@@ -94,7 +94,7 @@
     "SKILL_IMPORT_UNSUPPORTED_URL": "不支持该技能 URL 来源。",
     "SKILL_IMPORT_FAILED": "技能导入失败：{reason}",
     "SKILL_ALREADY_EXISTS": "技能 {name} 已存在，如需覆盖请启用 overwrite。",
-    "EXPERT_MARKET_FAILED": "专家市场暂时不可用，请稍后重试。",
+    "EXPERT_MARKET_FAILED": "智能体市场暂时不可用，请稍后重试。",
     "DESKTOP_SESSION_LIMIT": "远程桌面并发连接已达上限（最多 {limit} 路），请关闭其他连接后重试。",
     "DESKTOP_CAPTURE_FAILED": "连续抓屏失败。Linux 服务器请重启虚拟桌面；macOS 请在系统设置中授予屏幕录制与辅助功能权限后重连。"
   },
@@ -102,7 +102,7 @@
     "chat": "聊天",
     "common": "常用",
     "control": "控制",
-    "experts": "专家",
+    "experts": "智能体",
     "tasks": "任务",
     "connectors": "连接器",
     "acp": "ACP",
@@ -306,17 +306,17 @@
     }
   },
   "experts": {
-    "subtitle": "基于已配置的场景模板,一键创建预置身份/灵魂/心跳的智能体。每个专家自带 system prompt,新建后再为它绑定 provider 并启动即可。",
-    "loadFailed": "加载专家失败",
+    "subtitle": "基于已配置的场景模板,一键创建预置身份/灵魂/心跳的智能体。每个智能体自带 system prompt,新建后再为它绑定 provider 并启动即可。",
+    "loadFailed": "加载智能体失败",
     "loadDetailFailed": "加载详情失败",
-    "noExperts": "暂无可用专家",
-    "selectExpertHint": "请从左侧选择一个专家以查看详情",
+    "noExperts": "暂无可用智能体",
+    "selectExpertHint": "请从左侧选择一个智能体以查看详情",
     "creating": "创建中…",
-    "createFromExpert": "从此专家创建 Agent",
+    "createFromExpert": "从此智能体创建 Agent",
     "configFiles": "配置文件 ({{count}})",
     "clickToPreview": "点击预览",
     "systemPromptTitle": "{{file}} · 完整 System Prompt",
-    "systemPromptHint": "专家的所有文件按 manifest 顺序拼接为下方 system prompt(以 <code>\\n\\n</code> 连接)。",
+    "systemPromptHint": "智能体的所有文件按 manifest 顺序拼接为下方 system prompt(以 <code>\\n\\n</code> 连接)。",
     "createWithExpertTitle": "用 {{name}} 创建 Agent",
     "agentNameLabel": "Agent 名称",
     "pleaseEnterName": "请输入名称",
@@ -335,36 +335,36 @@
       "memory": "记忆存储",
       "proactive": "主动推送"
     },
-    "myExperts": "我的专家",
-    "expertLibrary": "内置专家",
-    "expertMarket": "专家市场",
+    "myExperts": "我的智能体",
+    "expertLibrary": "内置智能体",
+    "expertMarket": "智能体市场",
     "viewCard": "卡片",
     "viewTable": "表格",
     "mbtiDefault": "默认",
     "mbtiViewDetail": "点击查看人格说明",
-    "agentId": "专家 ID",
-    "copyAgentId": "点击复制专家 ID",
+    "agentId": "智能体 ID",
+    "copyAgentId": "点击复制智能体 ID",
     "table": {
       "name": "名称",
-      "agentId": "专家 ID",
+      "agentId": "智能体 ID",
       "state": "状态",
       "description": "描述",
       "model": "模型",
       "persona": "人格",
       "actions": "操作"
     },
-    "totalAgents": "共 {{count}} 个专家",
-    "totalLibrary": "共 {{count}} 个内置专家",
-    "totalMarket": "共 {{count}} 个市场专家",
-    "addFromLibrary": "+ 从内置专家新建",
-    "emptyMyExperts": "你还没有专家",
-    "emptyMyExpertsHint": "从内置专家或专家市场选择模板，快速创建你的第一个 AI 专家。",
-    "goToLibrary": "去内置专家",
-    "emptyLibrary": "暂无可用的内置专家",
-    "emptyLibraryHint": "请联系管理员配置内置专家。",
-    "marketLoadFailed": "加载专家市场失败",
-    "marketBackendMissing": "后端还没有加载专家市场接口，请重启 Octop 后端或确认当前运行的是这份新代码。",
-    "marketSearchPlaceholder": "搜索专家市场",
+    "totalAgents": "共 {{count}} 个智能体",
+    "totalLibrary": "共 {{count}} 个内置智能体",
+    "totalMarket": "共 {{count}} 个市场智能体",
+    "addFromLibrary": "+ 从内置智能体新建",
+    "emptyMyExperts": "你还没有智能体",
+    "emptyMyExpertsHint": "从内置智能体或智能体市场选择模板，快速创建你的第一个 AI 智能体。",
+    "goToLibrary": "去内置智能体",
+    "emptyLibrary": "暂无可用的内置智能体",
+    "emptyLibraryHint": "请联系管理员配置内置智能体。",
+    "marketLoadFailed": "加载智能体市场失败",
+    "marketBackendMissing": "后端还没有加载智能体市场接口，请重启 Octop 后端或确认当前运行的是这份新代码。",
+    "marketSearchPlaceholder": "搜索智能体市场",
     "sceneAll": "全部",
     "scenes": {
       "academic": "学术",
@@ -382,15 +382,15 @@
       "mysticism": "玄学命理",
       "tech": "技术"
     },
-    "emptyMarket": "暂无可用的市场专家",
+    "emptyMarket": "暂无可用的市场智能体",
     "emptyMarketHint": "可以换个关键词，或稍后再试。",
-    "noMarketDescription": "该市场专家暂未提供简介。",
+    "noMarketDescription": "该市场智能体暂未提供简介。",
     "marketSkillCount": "{{count}} 个技能",
     "createFromMarket": "从市场创建",
     "createAgainFromMarket": "再创建一个",
-    "marketCreateSuccess": "已从专家市场创建：{{name}}",
+    "marketCreateSuccess": "已从智能体市场创建：{{name}}",
     "marketCreateSuccessEnriching": "已创建 {{name}}。欢迎卡片正在后台优化，稍后进入对话即可看到更新。",
-    "marketDetailLoadFailed": "加载专家详情失败",
+    "marketDetailLoadFailed": "加载智能体详情失败",
     "marketSource": "SkillHub",
     "marketIncludedSkills": "包含技能",
     "marketQuickPrompts": "快速启动卡片",
@@ -403,7 +403,7 @@
     "installedBadge": "已安装",
     "installAgain": "再次安装",
     "createFromTemplate": "+ 从此模板新建",
-    "editExpert": "编辑专家",
+    "editExpert": "编辑智能体",
     "basicInfo": "基本信息",
     "agentName": "名称",
     "agentDescription": "描述",
@@ -414,16 +414,16 @@
     "fileSaved": "{{filename}} 已保存",
     "fileSaveFailed": "保存 {{filename}} 失败",
     "createDrawerTitle": "从「{{name}}」新建",
-    "agentStarted": "专家「{{name}}」已启动",
-    "agentStopped": "专家「{{name}}」已停止",
+    "agentStarted": "智能体「{{name}}」已启动",
+    "agentStopped": "智能体「{{name}}」已停止",
     "agentStartFailed": "启动失败",
     "agentStopFailed": "停止失败",
-    "agentReloadSuccess": "专家「{{name}}」已重载",
+    "agentReloadSuccess": "智能体「{{name}}」已重载",
     "agentReloadFailed": "重载失败",
     "reloadAgent": "重载",
     "startAgent": "启动",
     "retryStart": "重试启动",
-    "agentDeleted": "专家「{{name}}」已删除",
+    "agentDeleted": "智能体「{{name}}」已删除",
     "confirmDelete": "删除「{{name}}」？",
     "confirmDeleteHint": "此操作不可撤销。",
     "agentDisable": "停用",
@@ -475,13 +475,13 @@
     "pathLabel": "路径前缀（从 / 起）",
     "backendForPath": "后端",
     "mdFilesTitle": "模板文件预览",
-    "mdFilesHint": "以下是该专家的配置文件内容，创建后可在工作区中修改。",
+    "mdFilesHint": "以下是该智能体的配置文件内容，创建后可在工作区中修改。",
     "openWorkspace": "编辑工作区",
     "noWorkspaceFiles": "工作区中暂无可编辑的配置文件",
     "workspaceFilesFailed": "加载工作区配置文件失败",
     "skillFilesTitle": "技能列表 ({{count}})",
-    "skillFilesHint": "该专家自带的技能，创建后会写入工作区的 skills/ 目录。",
-    "noSkillFiles": "该专家暂无自带技能",
+    "skillFilesHint": "该智能体自带的技能，创建后会写入工作区的 skills/ 目录。",
+    "noSkillFiles": "该智能体暂无自带技能",
     "subagentFilesTitle": "子智能体列表 ({{count}})",
     "subagentFilesHint": "工作区 agents/ 目录下的子智能体定义，主智能体通过 task 工具委派任务。",
     "noSubagentFiles": "工作区中暂无子智能体",
@@ -528,8 +528,8 @@
     }
   },
   "agent_errors": {
-    "no_models_configured": "未配置可用模型，请前往「设置 → 模型」配置 Provider，然后重新启用此专家。",
-    "model_ref_unavailable": "默认模型不可用或已禁用，请检查「设置 → 模型」或修改此专家的默认模型后重试。"
+    "no_models_configured": "未配置可用模型，请前往「设置 → 模型」配置 Provider，然后重新启用此智能体。",
+    "model_ref_unavailable": "默认模型不可用或已禁用，请检查「设置 → 模型」或修改此智能体的默认模型后重试。"
   },
   "chat": {
     "thinking": "正在思考",
@@ -556,16 +556,16 @@
     "send": "发送",
     "agentNoDescription": "暂无描述",
     "noSessionsYet": "直接发消息即可开始对话",
-    "agentNotRunning": "此专家未启用",
-    "agentNotRunningHint": "请先在专家页面启用此专家后再开始对话。",
-    "agentFailed": "专家启动失败",
-    "agentFailedHint": "请根据下方错误信息修复配置，然后重新启用此专家。",
-    "agentStarting": "专家正在启动…",
-    "agentStartingHint": "请等待专家启动完成。",
-    "goToExperts": "前往专家页面",
-    "noAgentsTitle": "还没有专家",
-    "noAgentsHint": "从专家列表选择模板，快速创建你的第一个 AI 专家。",
-    "createExpert": "去创建专家",
+    "agentNotRunning": "此智能体未启用",
+    "agentNotRunningHint": "请先在智能体页面启用此智能体后再开始对话。",
+    "agentFailed": "智能体启动失败",
+    "agentFailedHint": "请根据下方错误信息修复配置，然后重新启用此智能体。",
+    "agentStarting": "智能体正在启动…",
+    "agentStartingHint": "请等待智能体启动完成。",
+    "goToExperts": "前往智能体页面",
+    "noAgentsTitle": "还没有智能体",
+    "noAgentsHint": "从智能体列表选择模板，快速创建你的第一个 AI 智能体。",
+    "createExpert": "去创建智能体",
     "pickAgent": "请先选择一个 Agent",
     "bootstrapKickoff": "你好，我们开始吧",
     "createSessionFailed": "创建会话失败，请重试",
@@ -578,17 +578,17 @@
     "expandHistorySidebar": "展开对话历史",
     "collapseHistorySidebar": "收起对话历史",
     "agentProfile": {
-      "open": "查看专家详情",
-      "title": "专家详情"
+      "open": "查看智能体详情",
+      "title": "智能体详情"
     },
     "composerMore": "更多工具",
     "skillPicker": "选择技能",
     "skillPickerSearch": "搜索技能",
     "skillPickerEmpty": "暂无可用技能",
-    "expertPicker": "选择专家",
-    "expertPickerSearch": "搜索专家",
-    "expertPickerEmpty": "暂无其他专家",
-    "expertPickerManage": "管理专家",
+    "expertPicker": "选择智能体",
+    "expertPickerSearch": "搜索智能体",
+    "expertPickerEmpty": "暂无其他智能体",
+    "expertPickerManage": "管理智能体",
     "composerContextLabel": "消息附加上下文",
     "contextWindow": {
       "tooltip": "上下文占用 {{used}} / {{max}} · {{percent}}%（最近一次模型请求）",
@@ -2396,17 +2396,17 @@
       "contextEmpty": "暂无上下文",
       "sendTo": "命令将发送到：{{session}}",
       "noTerminal": "请先打开一个终端连接",
-      "inputPlaceholder": "问运维专家...",
+      "inputPlaceholder": "问运维智能体...",
       "send": "发送",
       "modeAssist": "辅助模式",
       "modeAutopilot": "全托管",
       "execBtn": "执行到终端",
       "copied": "已复制",
-      "gateTitle": "尚未创建运维专家",
-      "gateDesc": "AI 终端需要运维专家 Agent 来生成精准的运维命令",
-      "gateCreate": "一键创建运维专家",
+      "gateTitle": "尚未创建运维智能体",
+      "gateDesc": "AI 终端需要运维智能体 Agent 来生成精准的运维命令",
+      "gateCreate": "一键创建运维智能体",
       "gateCreating": "创建中...",
-      "gateNoProvider": "运维专家尚未配置模型",
+      "gateNoProvider": "运维智能体尚未配置模型",
       "gateConfigureLink": "前往配置",
       "autopilotGoalPlaceholder": "描述你想完成的目标，例如：把项目打包成 Docker 镜像...",
       "autopilotPlan": "执行计划",
@@ -2510,7 +2510,7 @@
     "bookmarkSaveFailed": "保存收藏失败",
     "ai": {
       "title": "AI 助手",
-      "expert": "专家",
+      "expert": "智能体",
       "agent": "助手",
       "profile": "Profile",
       "currentUrl": "当前网页",
@@ -2948,7 +2948,7 @@
     }
   },
   "agentSelector": {
-    "label": "当前专家"
+    "label": "当前智能体"
   },
   "login": {
     "title": "登录",
@@ -3271,8 +3271,8 @@
   },
   "pageShell": {
     "experts": {
-      "title": "专家",
-      "subtitle": "创建与管理你的 AI 专家，也可从模板库挑选场景一键新建。"
+      "title": "智能体",
+      "subtitle": "创建与管理你的 AI 智能体，也可从模板库挑选场景一键新建。"
     },
     "tasks": {
       "title": "定时任务",
@@ -3304,7 +3304,7 @@
     },
     "subagents": {
       "title": "子智能体",
-      "subtitle": "管理当前专家的子智能体，安装或编辑子智能体技能"
+      "subtitle": "管理当前智能体的子智能体，安装或编辑子智能体技能"
     },
     "memory": {
       "title": "记忆",
@@ -3365,6 +3365,185 @@
     "terminal": {
       "title": "终端 AI+",
       "subtitle": "在浏览器中运行交互式 Shell 终端"
+    }
+  },
+  "policeWorkbench": {
+    "brand": {
+      "name": "PoliceBuddy",
+      "subtitle": "警务智能体工作台"
+    },
+    "home": {
+      "groups": {
+        "police-development": "警务智能体开发",
+        "web-workbench": "Web 工作台"
+      },
+      "skillsTitle": "内置技能",
+      "skillsSubtitle": "点击技能卡选择该技能并预填提示语，确认后发送",
+      "noDescription": "暂无描述",
+      "launch": "启动",
+      "creating": "创建中…",
+      "selectInstance": "该模板有多个实例，请选择要使用的实例",
+      "instanceUnavailable": "所选实例未就绪，请先启动该智能体",
+      "agentCreated": "智能体「{{name}}」已创建",
+      "launchFailed": "启动失败，请重试",
+      "catalogUnsupported": "后端目录版本不支持，无法展示警务智能体分组目录",
+      "loadFailed": "目录加载失败，请重试",
+      "retry": "重试",
+      "emptyCatalog": "暂无可用的智能体模板",
+      "noSkills": "暂无推荐的内置技能",
+      "skillUnavailable": "该技能已不可用，已从本轮选择中移除",
+      "prefillHint": "已填入提示语，确认后发送",
+      "overviewTitle": "任务与文件"
+    },
+    "nav": {
+      "newTask": "新建任务",
+      "assistants": "助理",
+      "projects": "项目",
+      "expertsSkillsConnectors": "智能体·技能·连接器",
+      "cronJobs": "定时任务",
+      "library": "资料库",
+      "more": "更多",
+      "settings": "设置",
+      "messages": "消息"
+    },
+    "catalog": {
+      "tasks": "任务({count})",
+      "spaces": "空间({count})",
+      "searchPlaceholder": "搜索名称",
+      "searchEmpty": "无匹配结果",
+      "loadedScope": "已加载 {count} 条",
+      "loadMore": "继续加载",
+      "retry": "重试",
+      "emptyTasks": "暂无任务",
+      "emptySpaces": "暂无空间",
+      "loadFailed": "加载失败",
+      "unknown": "未知",
+      "notAvailable": "不可获取",
+      "noPermission": "无权访问"
+    },
+    "runStatus": {
+      "running": "执行中",
+      "done": "已完成",
+      "failed": "失败",
+      "cancelled": "已取消",
+      "unknown": "状态未知"
+    },
+    "overview": {
+      "policeMakerTitle": "警务智能体制作",
+      "policeMakerDescription": "进入智能体与模板库，制作警务业务智能体",
+      "webWorkbenchTitle": "Web 工作台",
+      "webWorkbenchDescription": "在当前任务中直接开始对话与协作",
+      "emptyCategory": "该分类下暂无可用能力",
+      "viewAllArtifacts": "查看所有产物({count})",
+      "viewAllChanges": "查看所有变更({count})",
+      "statsIncomplete": "统计未完成",
+      "artifactsTitle": "空间文件",
+      "noTaskChanges": "当前空间无可获取的会话变更记录"
+    },
+    "tags": {
+      "office": "日常办公",
+      "coding": "代码开发",
+      "design": "设计创意"
+    },
+    "brief": {
+      "title": "下次开发卡",
+      "delivered": "本次已交付",
+      "nextSteps": "下次回来做什么",
+      "materials": "需带来的材料",
+      "empty": "暂无记录"
+    },
+    "composer": {
+      "placeholder": "今天帮你做些什么？@ 引用对话文件，/ 调用技能与指令",
+      "role": "角色",
+      "model": "模型",
+      "selectRole": "选择角色",
+      "selectModel": "选择模型",
+      "noRole": "暂无可用角色",
+      "noModel": "暂无可用模型",
+      "configure": "前往配置",
+      "send": "发送",
+      "cancelRun": "取消执行"
+    },
+    "modes": {
+      "ask": "问一问",
+      "act": "做一做",
+      "plan": "想一想"
+    },
+    "plan": {
+      "title": "执行前确认",
+      "goal": "任务目标",
+      "noGoal": "未填写文字目标",
+      "resources": "本次资源",
+      "workflow": "确认任务目标与资源 → 确认后调用当前 Agent → 展示执行过程、结果与产物",
+      "notice": "确认前不会启动计划所涉的数据查询或文书生成",
+      "confirm": "确认执行",
+      "cancel": "取消计划",
+      "cancelled": "计划未执行",
+      "stale": "目标或资源已变化，请重新核对"
+    },
+    "references": {
+      "files": "对话文件",
+      "skills": "技能",
+      "connectors": "连接器",
+      "agents": "协作智能体",
+      "commands": "指令",
+      "empty": "无匹配结果",
+      "remove": "移除引用",
+      "invalid": "引用已失效，请移除或重新选择",
+      "validating": "正在校验引用"
+    },
+    "execution": {
+      "queued": "已记录，待本次执行后提交",
+      "editGuidance": "修改",
+      "revokeGuidance": "撤销",
+      "retry": "重试",
+      "resend": "重新发送"
+    },
+    "navigation": {
+      "capabilityUnavailable": "该能力暂不可用",
+      "pageLoadFailed": "页面加载失败，请重试",
+      "forbidden": "暂无访问权限",
+      "contextRequired": "请先选择可用的智能体或任务",
+      "retry": "重试"
+    },
+    "preview": {
+      "source": "源码",
+      "rendered": "预览",
+      "refresh": "刷新",
+      "download": "下载",
+      "close": "关闭",
+      "loading": "正在加载文档",
+      "generating": "产物正在生成",
+      "updating": "产物正在更新",
+      "updateFailed": "产物更新失败，可重试",
+      "deleted": "该产物已删除或不可用",
+      "newArtifactAvailable": "有新产物可切换",
+      "backgroundUpdated": "后台有更新",
+      "empty": "文档为空",
+      "failed": "文档加载失败",
+      "forbidden": "无权访问或文档已失效",
+      "unsupported": "该类型不支持在线查看",
+      "renderFailed": "渲染失败，可查看源码或刷新",
+      "manifestPending": "产物清单生成中，请稍候",
+      "manifestInvalid": "产物清单缺失或非法，无法预览",
+      "demoData": "演示数据",
+      "humanReview": "输出仅供参考，需人工复核",
+      "viewport": {
+        "desktop": "桌面",
+        "tablet": "平板",
+        "mobile": "移动"
+      },
+      "emptySelection": "尚未选择文档"
+    },
+    "environment": {
+      "local": "本机",
+      "unknown": "环境未知",
+      "connected": "服务已连接",
+      "disconnected": "连接失败",
+      "retry": "重试连接"
+    },
+    "footer": {
+      "copyright": "柠企萌 © XOXO"
     }
   }
 }

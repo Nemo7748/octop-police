@@ -3,6 +3,7 @@ import { message } from "antd";
 import type { TFunction } from "i18next";
 import { useNavigate } from "react-router-dom";
 import type { ChatAttachment, UserComposerContext } from "./useChat";
+import type { SendReceipt } from "../workbenchTypes";
 import type { Session } from "./useSessions";
 import * as chatStore from "./chatStore";
 import { EMPTY_CHAT_SESSION_KEY, PENDING_THREAD_ID } from "../constants";
@@ -68,15 +69,20 @@ export function useChatSend({
   const navigate = useNavigate();
 
   const handleSend = useCallback(
-    (text: string, attachments?: ChatAttachment[]) => {
+    async (
+      text: string,
+      attachments?: ChatAttachment[],
+    ): Promise<SendReceipt> => {
       const agent = resolvedAgentId;
       if (!agent) {
         message.warning(t("chat.pickAgent", "请先选择一个 Agent"));
-        return;
+        return { status: "error", reason: "no-agent" };
       }
 
       const trimmed = text.trim();
-      if (!trimmed && !(attachments && attachments.length > 0)) return;
+      if (!trimmed && !(attachments && attachments.length > 0)) {
+        return { status: "empty" };
+      }
 
       const maybeRenameNewThread = (tid: string, hadMessages: boolean) => {
         const current = sessions.find((s) => s.id === tid);
@@ -112,7 +118,7 @@ export function useChatSend({
 
       if (activeThreadId) {
         runSend(activeThreadId, messagesLength > 0);
-        return;
+        return { status: "accepted" };
       }
 
       const userMsg = buildUserMessage(trimmed, attachments, composerContext);
@@ -124,32 +130,32 @@ export function useChatSend({
       chatStore.clearMessages(EMPTY_CHAT_SESSION_KEY);
       navigate(`/chat/${agent}/${PENDING_THREAD_ID}`);
 
-      void resolvedId.then((tid) => {
-        if (!tid) {
-          chatStore.clearMessages(PENDING_THREAD_ID);
-          navigate(`/chat/${agent}`, { replace: true });
-          message.error(t("chat.createSessionFailed", "创建会话失败，请重试"));
-          return;
-        }
-        const currentSnap = chatStore.getSnapshot(PENDING_THREAD_ID);
-        const hadMessages = currentSnap.messages.length > 1;
-        chatStore.renameSessionKey(PENDING_THREAD_ID, tid);
-        maybeRenameNewThread(tid, hadMessages);
-        chatStore.sendTurn(
-          tid,
-          trimmed,
-          agent,
-          "",
-          attachments,
-          undefined,
-          modelOverride,
-          tid,
-          selectedConnectors,
-          selectedSkills,
-          selectedTargetAgents,
-        );
-        navigate(`/chat/${agent}/${tid}`, { replace: true });
-      });
+      const tid = await resolvedId;
+      if (!tid) {
+        chatStore.clearMessages(PENDING_THREAD_ID);
+        navigate(`/chat/${agent}`, { replace: true });
+        message.error(t("chat.createSessionFailed", "创建会话失败，请重试"));
+        return { status: "error", reason: "create-session-failed" };
+      }
+      const currentSnap = chatStore.getSnapshot(PENDING_THREAD_ID);
+      const hadMessages = currentSnap.messages.length > 1;
+      chatStore.renameSessionKey(PENDING_THREAD_ID, tid);
+      maybeRenameNewThread(tid, hadMessages);
+      chatStore.sendTurn(
+        tid,
+        trimmed,
+        agent,
+        "",
+        attachments,
+        undefined,
+        modelOverride,
+        tid,
+        selectedConnectors,
+        selectedSkills,
+        selectedTargetAgents,
+      );
+      navigate(`/chat/${agent}/${tid}`, { replace: true });
+      return { status: "accepted" };
     },
     [
       activeThreadId,

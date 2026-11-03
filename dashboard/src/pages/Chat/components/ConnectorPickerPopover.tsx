@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { usePoliceNavigation } from "../../../hooks/usePoliceNavigation";
 import { Switch } from "antd";
 import { Settings2 } from "lucide-react";
 import SearchablePickerPanel, {
@@ -29,7 +29,7 @@ export default function ConnectorPickerPopover({
   onNavigateAway,
 }: ConnectorPickerPopoverProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigation = usePoliceNavigation();
 
   const filterFn = useCallback(
     (connector: ChatConnectorOption, query: string) =>
@@ -50,7 +50,10 @@ export default function ConnectorPickerPopover({
       footerLabel={t("connectors.manageConnectors")}
       onFooterClick={() => {
         onNavigateAway?.();
-        navigate("/connectors");
+        navigation.navigate({
+          sourceEntry: "connector-picker.manage",
+          capabilityId: "connectors",
+        });
       }}
       renderItem={(connector) => {
         const active = selectedConnectors.includes(connector.mcp_server_name);

@@ -467,6 +467,47 @@
   background: #fff;
 }
 
+.htmlPreviewWrap {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.htmlViewportBar {
+  display: flex;
+  gap: 4px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-secondary, #f9fafb);
+}
+
+.htmlViewportBtn {
+  padding: 2px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.htmlViewportBtnActive {
+  background: var(--primary-color, #1677ff);
+  color: #fff;
+  border-color: var(--primary-color, #1677ff);
+}
+
+.htmlPreviewScroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  background: #fff;
+}
+
 .documentPreview {
   position: relative;
   display: flex;

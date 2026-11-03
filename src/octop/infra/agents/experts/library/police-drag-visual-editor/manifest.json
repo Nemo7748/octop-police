@@ -1,0 +1,57 @@
+{
+  "id": "police-drag-visual-editor",
+  "catalog_visible": true,
+  "group": "web-workbench",
+  "order": 3,
+  "label": {
+    "zh": "拖拽可视化编辑器",
+    "en": "Drag Visual Editor"
+  },
+  "description": {
+    "zh": "根据组件、布局、样式和交互要求，生成可在沙箱内拖拽编辑的 HTML 页面；预览内编辑不反向写入宿主工作区。",
+    "en": "Generate drag-and-edit HTML pages from your components and layout; in-preview edits stay inside the sandbox."
+  },
+  "welcome_message": {
+    "zh": "描述页面与组件需求，我来生成可拖拽编辑的页面",
+    "en": "Describe the page and components — I'll build a drag-editable draft"
+  },
+  "icon_name": "mouse-pointer-2",
+  "color": "#ea580c",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成拖拽编辑页",
+        "en": "Build editor page"
+      },
+      "description": {
+        "zh": "输入：页面用途、组件清单（卡片/表格/表单）、布局与配色。预期产物：outbound/<task>/ 下的 editor.html（可拖拽调整布局的页面）",
+        "en": "Input: purpose, component list (cards/tables/forms), layout and palette. Output: drag-editable editor.html under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请生成可拖拽编辑的可视化页面。\n\n页面用途：\n\n组件清单（卡片、表格、表单等）：\n\n布局与配色要求：\n\n预期产物：在 outbound/<task>/ 下生成自包含 editor.html，支持在预览内拖拽、缩放和属性调整。",
+        "en": "Please build a drag-editable visual page.\n\nPurpose:\n\nComponents (cards, tables, forms):\n\nLayout and palette:\n\nExpected output: self-contained editor.html under outbound/<task>/ with in-preview drag, resize and property editing."
+      },
+      "color": "#ffedd5",
+      "icon_name": "mouse-pointer-2"
+    },
+    {
+      "title": {
+        "zh": "导出布局配置",
+        "en": "Export layout"
+      },
+      "description": {
+        "zh": "把当前拖拽结果整理为布局 JSON，供开发落地参考",
+        "en": "Turn the current drag result into layout JSON for dev handoff"
+      },
+      "prompt": {
+        "zh": "请基于当前页面布局生成 layout.json（组件、位置、尺寸、样式键值），写入 outbound/<task>/，并附简要说明文档。",
+        "en": "Please export the current layout as layout.json (components, positions, sizes, style keys) into outbound/<task>/ with a short README."
+      },
+      "color": "#fff7ed",
+      "icon_name": "braces"
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { Layout } from "antd";
-import { Menu as MenuIcon, Github } from "lucide-react";
+import { Badge, Layout } from "antd";
+import { Bell, Menu as MenuIcon, Github, Settings, Shield } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import PwaInstallPrompt from "../components/PwaInstallPrompt";
 import pwaStyles from "../components/PwaInstallPrompt/index.module.less";
 import AppVersionBadge from "../components/AppVersionBadge";
@@ -11,20 +13,40 @@ import AvatarDropdown from "../components/AvatarDropdown";
 import { authApi } from "../api/modules/auth";
 import type { OctopUser } from "../api/modules/auth";
 import { useTheme } from "../context/ThemeContext";
+import { useAgent } from "../context/AgentContext";
+import { useUserRole } from "../hooks/useUserRole";
+import { usePoliceNavigation } from "../hooks/usePoliceNavigation";
 import { typeSize } from "../utils/mobileTypeScale";
 
 const { Header: AntHeader } = Layout;
 
 interface HeaderProps {
-  selectedKey?: string;
+  selectedKey?: string | null;
   collapsed?: boolean;
   onToggle?: () => void;
   isMobile?: boolean;
+  isPoliceRoute?: boolean;
 }
 
-export default function Header({ onToggle, isMobile }: HeaderProps) {
+export default function Header({
+  onToggle,
+  isMobile,
+  isPoliceRoute: policeRouteProp,
+}: HeaderProps) {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
+  const location = useLocation();
+  const navigation = usePoliceNavigation();
+  const role = useUserRole();
+  const { agents } = useAgent();
   const [user, setUser] = useState<OctopUser | null>(null);
+  const isPoliceWorkbench =
+    policeRouteProp ??
+    (location.pathname === "/chat" || location.pathname.startsWith("/chat/"));
+  const unreadTotal = agents.reduce(
+    (sum, agent) => sum + (agent.unread_count ?? 0),
+    0,
+  );
 
   useEffect(() => {
     authApi
@@ -94,21 +116,48 @@ export default function Header({ onToggle, isMobile }: HeaderProps) {
             flexShrink: 1,
           }}
         >
-          <img
-            src={logoSrc}
-            alt="octop"
-            style={{
-              height: isMobile ? 36 : 42,
-              width: "auto",
-              maxWidth: isMobile ? 230 : 280,
-              objectFit: "contain",
-              flexShrink: 0,
-              display: "block",
-            }}
-          />
-          <BetaBadge isMobile={isMobile} />
-          <CurrentVersionBadge isMobile={isMobile} />
-          <AppVersionBadge isMobile={isMobile} />
+          {isPoliceWorkbench ? (
+            <div
+              data-testid="police-brand"
+              style={{ display: "flex", alignItems: "center", gap: 10 }}
+            >
+              <Shield size={26} strokeWidth={1.8} aria-hidden />
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <strong style={{ fontSize: 16, lineHeight: 1.2 }}>
+                  {t("policeWorkbench.brand.name")}
+                </strong>
+                {!isMobile && (
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: "var(--fn-text-secondary)",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {t("policeWorkbench.brand.subtitle")}
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+              <img
+                src={logoSrc}
+                alt="octop"
+                style={{
+                  height: isMobile ? 36 : 42,
+                  width: "auto",
+                  maxWidth: isMobile ? 230 : 280,
+                  objectFit: "contain",
+                  flexShrink: 0,
+                  display: "block",
+                }}
+              />
+              <BetaBadge isMobile={isMobile} />
+              <CurrentVersionBadge isMobile={isMobile} />
+              <AppVersionBadge isMobile={isMobile} />
+            </>
+          )}
         </div>
       </div>
 
@@ -121,7 +170,65 @@ export default function Header({ onToggle, isMobile }: HeaderProps) {
           flexShrink: 0,
         }}
       >
-        {!isMobile && (
+        {isPoliceWorkbench && (
+          <>
+            <button
+              type="button"
+              aria-label={t("policeWorkbench.nav.messages")}
+              title={t("policeWorkbench.nav.messages")}
+              onClick={() =>
+                navigation.navigate({
+                  sourceEntry: "header.messages",
+                  capabilityId: "messages",
+                })
+              }
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 34,
+                height: 34,
+                border: "none",
+                borderRadius: "var(--fn-radius-md)",
+                background: "transparent",
+                color: "var(--fn-text-secondary)",
+                cursor: "pointer",
+              }}
+            >
+              <Badge count={unreadTotal} size="small" overflowCount={99}>
+                <Bell size={18} strokeWidth={1.8} />
+              </Badge>
+            </button>
+            {role === "admin" && (
+              <button
+                type="button"
+                aria-label={t("policeWorkbench.nav.settings")}
+                title={t("policeWorkbench.nav.settings")}
+                onClick={() =>
+                  navigation.navigate({
+                    sourceEntry: "header.settings",
+                    capabilityId: "settings",
+                  })
+                }
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 34,
+                  height: 34,
+                  border: "none",
+                  borderRadius: "var(--fn-radius-md)",
+                  background: "transparent",
+                  color: "var(--fn-text-secondary)",
+                  cursor: "pointer",
+                }}
+              >
+                <Settings size={18} strokeWidth={1.8} />
+              </button>
+            )}
+          </>
+        )}
+        {!isMobile && !isPoliceWorkbench && (
           <a
             href="https://github.com/TencentCloud/Octop"
             target="_blank"

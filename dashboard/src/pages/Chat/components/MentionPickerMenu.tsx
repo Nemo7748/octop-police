@@ -1,15 +1,17 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Plug, Sparkles } from "lucide-react";
+import { FileText, Plug, Sparkles } from "lucide-react";
 import type { SkillSpec } from "../../Agent/Skills/useSkills";
 import type { ChatConnectorOption } from "./ConnectorPickerPopover";
 import type { ChatAgentOption } from "./ExpertAgentAvatar";
+import type { ConversationReference } from "../workbenchTypes";
 import ExpertAgentAvatar from "./ExpertAgentAvatar";
 import styles from "../index.module.less";
 
 export type MentionAgentOption = ChatAgentOption;
 
 export type MentionPick =
+  | { kind: "file"; path: string; label: string }
   | { kind: "skill"; slug: string; label: string }
   | { kind: "connector"; name: string; label: string }
   | { kind: "agent"; agent_id: string; label: string };
@@ -19,9 +21,20 @@ export function buildMentionItems(
   skills: SkillSpec[],
   connectors: ChatConnectorOption[],
   agents: MentionAgentOption[] = [],
+  files: readonly ConversationReference[] = [],
 ): MentionPick[] {
   const q = query.trim().toLowerCase();
   const out: MentionPick[] = [];
+  for (const file of files) {
+    if (
+      q &&
+      !file.name.toLowerCase().includes(q) &&
+      !file.path.toLowerCase().includes(q)
+    ) {
+      continue;
+    }
+    out.push({ kind: "file", path: file.path, label: file.name });
+  }
   for (const s of skills.filter((x) => x.enabled)) {
     const label = s.name || s.slug;
     if (
@@ -59,6 +72,7 @@ interface MentionPickerMenuProps {
   skills: SkillSpec[];
   connectors: ChatConnectorOption[];
   agents?: MentionAgentOption[];
+  files?: readonly ConversationReference[];
   activeIndex: number;
   onSelect: (pick: MentionPick) => void;
   onHover: (index: number) => void;
@@ -69,25 +83,24 @@ export default function MentionPickerMenu({
   skills,
   connectors,
   agents = [],
+  files = [],
   activeIndex,
   onSelect,
   onHover,
 }: MentionPickerMenuProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const items = useMemo(
-    () => buildMentionItems(query, skills, connectors, agents),
-    [query, skills, connectors, agents],
+    () => buildMentionItems(query, skills, connectors, agents, files),
+    [query, skills, connectors, agents, files],
   );
 
-  const skillSection = i18n.language.startsWith("zh") ? "技能" : "Skills";
-  const connSection = i18n.language.startsWith("zh") ? "连接器" : "Connectors";
-  const agentSection = i18n.language.startsWith("zh") ? "Agent" : "Agents";
-
   const sectionFor = (item: MentionPick) => {
-    if (item.kind === "skill") return skillSection;
-    if (item.kind === "connector") return connSection;
-    return agentSection;
+    if (item.kind === "file") return t("policeWorkbench.references.files");
+    if (item.kind === "skill") return t("policeWorkbench.references.skills");
+    if (item.kind === "connector")
+      return t("policeWorkbench.references.connectors");
+    return t("policeWorkbench.references.agents");
   };
 
   if (items.length === 0) {
@@ -113,7 +126,9 @@ export default function MentionPickerMenu({
         const idx = flatIndex;
         const active = idx === activeIndex;
         let icon;
-        if (item.kind === "skill") {
+        if (item.kind === "file") {
+          icon = <FileText size={14} />;
+        } else if (item.kind === "skill") {
           icon = <Sparkles size={14} />;
         } else if (item.kind === "connector") {
           icon = <Plug size={14} />;
@@ -131,7 +146,9 @@ export default function MentionPickerMenu({
         return (
           <div
             key={`${item.kind}-${
-              item.kind === "skill"
+              item.kind === "file"
+                ? item.path
+                : item.kind === "skill"
                 ? item.slug
                 : item.kind === "connector"
                 ? item.name

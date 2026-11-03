@@ -71,6 +71,26 @@ class QuickPromptResponse(BaseModel):
     icon_name: str | None = None
 
 
+class ExpertSummaryResponse(BaseModel):
+    """One visible bundled agent template (``GET /api/experts``)."""
+
+    id: str
+    label: LocalizedTextResponse
+    description: LocalizedTextResponse
+    welcome_message: LocalizedTextResponse
+    icon_name: str | None = None
+    color: str | None = None
+    group: str | None = Field(
+        default=None,
+        description="Home-catalog group: police-development or web-workbench",
+    )
+    order: int | None = Field(
+        default=None,
+        description="Sort position inside the group (positive integer)",
+    )
+    quick_prompts: list[QuickPromptResponse] = Field(default_factory=list)
+
+
 class ExpertHubItemResponse(BaseModel):
     id: str
     slug: str
@@ -136,6 +156,8 @@ def _summary_dict(s: Any) -> dict[str, Any]:
         },
         "icon_name": s.icon_name,
         "color": s.color,
+        "group": getattr(s, "group", None),
+        "order": getattr(s, "order", None),
         "quick_prompts": [_quick_prompt_dict(p) for p in getattr(s, "quick_prompts", ())],
     }
 
@@ -177,11 +199,16 @@ def _map_skillhub_error(exc: SkillHubMarketError) -> OctopError:
     )
 
 
-@router.get("/experts")
+@router.get(
+    "/experts",
+    response_model=list[ExpertSummaryResponse],
+    summary="List visible bundled agent templates",
+)
 async def list_experts(
     _: Any = Depends(current_user),
     server: Any = Depends(get_server),
 ) -> list[dict[str, Any]]:
+    """Visible home-catalog templates, ordered by group and catalog order."""
     catalog = server.expert_catalog
     if catalog is None:
         return []
@@ -191,14 +218,14 @@ async def list_experts(
 @router.get(
     "/experts/hub",
     response_model=ExpertHubListResponse,
-    summary="List SkillHub expert market cards",
+    summary="List SkillHub agent market cards",
 )
 async def list_expert_hub(
     q: str = "",
     scene: str = "",
     _: Any = Depends(current_user),
 ) -> dict[str, Any]:
-    """List SkillHub skillsets as market expert cards, optionally filtered by scene."""
+    """List SkillHub skillsets as market agent cards, optionally filtered by scene."""
     try:
         items, scenes = await asyncio.to_thread(browse_skillsets, q, scene=scene)
     except SkillHubMarketError as exc:
@@ -212,7 +239,7 @@ async def list_expert_hub(
 @router.get(
     "/experts/hub/{slug}",
     response_model=ExpertHubItemResponse,
-    summary="Get SkillHub expert market detail",
+    summary="Get SkillHub agent market detail",
 )
 async def get_expert_hub_item(
     slug: str,
@@ -230,7 +257,7 @@ async def get_expert_hub_item(
     "/experts/hub/{slug}/install",
     status_code=201,
     response_model=MarketCreateResponse,
-    summary="Create an agent from a SkillHub expert market card",
+    summary="Create an agent from a SkillHub agent market card",
 )
 async def install_expert_hub_item(
     slug: str,
@@ -238,7 +265,7 @@ async def install_expert_hub_item(
     user: Any = Depends(current_user),
     server: Any = Depends(get_server),
 ) -> dict[str, Any]:
-    """Create an agent from a SkillHub skillset-backed expert template."""
+    """Create an agent from a SkillHub skillset-backed agent template."""
     try:
         result = await create_skillhub_market_agent(
             server=server,

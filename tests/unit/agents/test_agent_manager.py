@@ -473,6 +473,36 @@ async def test_create_seeds_bootstrap_files(manager: AgentManager) -> None:
 
 
 @pytest.mark.asyncio
+async def test_start_seeds_builtin_police_skills(manager: AgentManager) -> None:
+    """_post_start_agent syncs packaged skills into _builtin_skills/; user skills untouched."""
+    from harness_agent import HarnessAgentManager
+
+    from octop.infra.agents.manager import AgentCreateSpec
+
+    _seed_test_provider(manager)
+    manager._harness_manager = HarnessAgentManager(
+        providers=manager.providers.build_harness_configs(),
+    )
+    row = await manager.create(AgentCreateSpec(name="builtin-skills"))
+    agent = manager.get_agent(row.agent_id)
+
+    for slug in (
+        "police-ppt-generation",
+        "police-document-organizing",
+        "police-official-drafting",
+        "police-legal-regulation-search",
+        "police-case-management-webapp",
+        "police-dossier-review",
+    ):
+        assert agent.workspace.exists(f"_builtin_skills/{slug}/SKILL.md"), slug
+
+    assert not agent.workspace.exists("skills/police-ppt-generation/SKILL.md")
+    cfg = manager._agent_config_dict(manager.get_row(row.agent_id))
+    assert not cfg.get("skills_disabled")
+    manager._harness_manager.close()
+
+
+@pytest.mark.asyncio
 async def test_templated_agent_keeps_expert_soul_on_reload(manager: AgentManager) -> None:
     """Reload must not overwrite expert template SOUL.md with persona defaults."""
     from harness_agent import HarnessAgentManager

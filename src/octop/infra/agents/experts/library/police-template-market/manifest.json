@@ -1,0 +1,57 @@
+{
+  "id": "police-template-market",
+  "catalog_visible": true,
+  "group": "web-workbench",
+  "order": 5,
+  "label": {
+    "zh": "警务模板市场",
+    "en": "Template Market"
+  },
+  "description": {
+    "zh": "根据模板分类、卡片字段和筛选规则，生成模板市场 HTML/JSON 演示应用；不冒充真实在线市场或支付/发布后端。",
+    "en": "Build a template-market HTML/JSON demo from your categories, card fields and filters; not a real store or payment backend."
+  },
+  "welcome_message": {
+    "zh": "告诉我模板分类与筛选规则，我来生成市场页面",
+    "en": "Describe categories and filters — I'll build the market page"
+  },
+  "icon_name": "layout-grid",
+  "color": "#9333ea",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成模板市场页",
+        "en": "Build market page"
+      },
+      "description": {
+        "zh": "输入：模板分类、卡片字段（名称/封面/标签/版本）、筛选与排序规则。预期产物：outbound/<task>/ 下的 market.html 与 templates.json",
+        "en": "Input: categories, card fields (name/cover/tags/version), filters. Output: market.html and templates.json under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请生成警务模板市场演示页面。\n\n模板分类与卡片字段：\n\n筛选与排序规则：\n\n预期产物：在 outbound/<task>/ 下生成 market.html（分类导航、卡片网格、筛选交互）和 templates.json（模板数据）。不接入真实市场或支付后端。",
+        "en": "Please build a template market demo page.\n\nCategories and card fields:\n\nFilters and sorting:\n\nExpected output: market.html (nav, card grid, filters) and templates.json under outbound/<task>/. No real store or payment backend."
+      },
+      "color": "#f3e8ff",
+      "icon_name": "layout-grid"
+    },
+    {
+      "title": {
+        "zh": "扩展筛选维度",
+        "en": "Extend filters"
+      },
+      "description": {
+        "zh": "为现有市场页增加新的筛选维度或排序方式并更新页面",
+        "en": "Add filter dimensions or sorting to the existing page"
+      },
+      "prompt": {
+        "zh": "请为 market.html 增加以下筛选/排序能力：\n\n同步更新 templates.json 结构并在页面标注演示数据。",
+        "en": "Please add these filter/sort capabilities to market.html:\n\nUpdate templates.json accordingly and keep demo-data labels."
+      },
+      "color": "#faf5ff",
+      "icon_name": "filter"
+    }
+  ]
+}

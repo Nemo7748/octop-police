@@ -10,6 +10,14 @@ import {
   type Session,
 } from "./useSessions";
 import { EMPTY_CHAT_SESSION_KEY } from "../constants";
+import {
+  getNavigationIntent,
+  isLatestNavigationIntent,
+} from "../../../utils/navigationIntent";
+import {
+  clearWorkbenchReturn,
+  saveWorkbenchReturn,
+} from "../../../utils/workbenchReturnStore";
 
 interface UseChatNavigationParams {
   routeAgentId: string | undefined;
@@ -153,11 +161,13 @@ export function useChatNavigation({
       return;
     }
     if (sessions.length === 0) {
+      clearWorkbenchReturn(`/chat/${resolvedAgentId}/${threadId}`);
       navigate(`/chat/${resolvedAgentId}`, { replace: true });
       clearMessages();
       return;
     }
     if (sessions.some((s) => s.id === threadId)) {
+      saveWorkbenchReturn(`/chat/${resolvedAgentId}/${threadId}`);
       ensureThreadAttemptRef.current = null;
       return;
     }
@@ -166,9 +176,19 @@ export function useChatNavigation({
       return;
     }
     ensureThreadAttemptRef.current = attemptKey;
+    const intentSeq = getNavigationIntent();
     void ensureThreadInList(threadId).then((found) => {
-      if (ensureThreadAttemptRef.current !== attemptKey) return;
-      if (found) return;
+      if (
+        ensureThreadAttemptRef.current !== attemptKey ||
+        !isLatestNavigationIntent(intentSeq)
+      ) {
+        return;
+      }
+      if (found) {
+        saveWorkbenchReturn(`/chat/${resolvedAgentId}/${threadId}`);
+        return;
+      }
+      clearWorkbenchReturn(`/chat/${resolvedAgentId}/${threadId}`);
       const preferred = pickPreferredSession(sessions);
       if (preferred) {
         void octopThreadsApi

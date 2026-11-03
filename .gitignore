@@ -8,6 +8,9 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+# Visual Studio local cache
+.vs/
+
 # Environment / secrets
 .env
 .env.*

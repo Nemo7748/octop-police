@@ -25,6 +25,9 @@ logger = logging.getLogger(__name__)
 MANIFEST_FILENAME = "manifest.json"
 """Expert template / agent-workspace welcome metadata filename."""
 
+CATALOG_GROUPS: tuple[str, ...] = ("police-development", "web-workbench")
+"""Home-catalog group identifiers accepted in ``manifest.json`` ``group``."""
+
 
 @dataclass(frozen=True)
 class ExpertQuickPrompt:
@@ -54,6 +57,12 @@ class ExpertSummary:
     icon_name: str | None = None
     color: str | None = None
     quick_prompts: tuple[ExpertQuickPrompt, ...] = ()
+    catalog_visible: bool = False
+    """Shown on the dashboard home catalog / built-in tab (strict manifest opt-in)."""
+    group: str | None = None
+    """Home-catalog group, one of :data:`CATALOG_GROUPS`."""
+    order: int | None = None
+    """Sort position inside *group* (positive integer, unique within the group)."""
 
 
 @dataclass(frozen=True)
@@ -276,6 +285,54 @@ def _parse_quick_prompts(data: dict[str, Any]) -> tuple[ExpertQuickPrompt, ...]:
     return tuple(out)
 
 
+def _parse_catalog_meta(
+    data: dict[str, Any], expert_id: str
+) -> tuple[bool, str | None, int | None]:
+    """Parse home-catalog metadata strictly.
+
+    ``catalog_visible`` defaults to ``False`` when absent. A visible entry
+    requires a valid ``group`` (see :data:`CATALOG_GROUPS`) and a positive
+    integer ``order``; malformed declarations are logged and the entry stays
+    out of the catalog listing (``get()`` by id is unaffected).
+    """
+    raw_visible = data.get("catalog_visible")
+    visible = raw_visible is True
+    if raw_visible is not None and not isinstance(raw_visible, bool):
+        logger.warning(
+            "expert %s: catalog_visible must be a boolean, got %r; treating as hidden",
+            expert_id,
+            raw_visible,
+        )
+    group = data.get("group")
+    if group is not None and group not in CATALOG_GROUPS:
+        logger.warning(
+            "expert %s: group %r not in %s; ignoring",
+            expert_id,
+            group,
+            CATALOG_GROUPS,
+        )
+        group = None
+    order = data.get("order")
+    if order is not None and (
+        isinstance(order, bool) or not isinstance(order, int) or order <= 0
+    ):
+        logger.warning(
+            "expert %s: order must be a positive integer, got %r; ignoring",
+            expert_id,
+            order,
+        )
+        order = None
+    if visible and (group is None or order is None):
+        logger.warning(
+            "expert %s: catalog_visible entry requires a group in %s and a positive "
+            "integer order; skipping from catalog",
+            expert_id,
+            CATALOG_GROUPS,
+        )
+        visible = False
+    return visible, group, order
+
+
 class ExpertCatalog:
     """Loads expert templates from a directory tree.
 
@@ -314,10 +371,34 @@ class ExpertCatalog:
         rels = paths if paths is not None else expert.files
         return read_text_file_contents(self.expert_dir(expert_id), rels)
 
+    @staticmethod
+    def _claim_order(
+        seen_orders: dict[str, dict[int, str]], group: str, order: int, expert_id: str
+    ) -> bool:
+        """Reserve *order* inside *group* for *expert_id*; ``False`` when taken."""
+        group_orders = seen_orders.setdefault(group, {})
+        taken_by = group_orders.get(order)
+        if taken_by is not None and taken_by != expert_id:
+            logger.warning(
+                "expert %s: order %d in group %s already used by %s; "
+                "skipping from catalog",
+                expert_id,
+                order,
+                group,
+                taken_by,
+            )
+            return False
+        for used_order, used_id in list(group_orders.items()):
+            if used_id == expert_id and used_order != order:
+                del group_orders[used_order]
+        group_orders[order] = expert_id
+        return True
+
     def refresh(self) -> None:
         """Re-scan the library directory; quietly skip malformed entries."""
         out: dict[str, Expert] = {}
         dirs: dict[str, Path] = {}
+        seen_orders: dict[str, dict[int, str]] = {}
         for root in self.roots:
             if not root.exists():
                 continue
@@ -331,6 +412,14 @@ class ExpertCatalog:
                 if not isinstance(data, dict):
                     continue
                 ex_id = str(data.get("id") or entry.name)
+                visible, group, order = _parse_catalog_meta(data, ex_id)
+                if (
+                    visible
+                    and group is not None
+                    and order is not None
+                    and not self._claim_order(seen_orders, group, order, ex_id)
+                ):
+                    visible = False
                 prompt_files = [str(f) for f in (data.get("prompt_files") or [])]
                 seed_paths = discover_seed_paths(entry)
                 summary = ExpertSummary(
@@ -344,6 +433,9 @@ class ExpertCatalog:
                     icon_name=data.get("icon_name"),
                     color=data.get("color"),
                     quick_prompts=_parse_quick_prompts(data),
+                    catalog_visible=visible,
+                    group=group,
+                    order=order,
                 )
                 out[ex_id] = Expert(
                     summary=summary,
@@ -357,8 +449,20 @@ class ExpertCatalog:
         logger.info("expert catalog loaded: %d templates", len(out))
 
     def list_summaries(self) -> list[ExpertSummary]:
-        summaries = [e.summary for e in self._experts.values() if e.summary.id != "default"]
-        summaries.sort(key=lambda s: (0 if s.id == "general-assistant" else 1, s.id))
+        """Visible home-catalog entries, stable by group then order."""
+        group_rank = {name: rank for rank, name in enumerate(CATALOG_GROUPS)}
+        summaries = [
+            e.summary
+            for e in self._experts.values()
+            if e.summary.id != "default" and e.summary.catalog_visible
+        ]
+        summaries.sort(
+            key=lambda s: (
+                group_rank.get(s.group or "", len(group_rank)),
+                s.order if s.order is not None else 0,
+                s.id,
+            )
+        )
         return summaries
 
     def get(self, expert_id: str) -> Expert | None:

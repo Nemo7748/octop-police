@@ -418,7 +418,12 @@ const Markdown = memo(function Markdown({
               );
             }
             return (
-              <a href={href} target="_blank" rel="noreferrer" {...props}>
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...props}
+              >
                 {children}
               </a>
             );

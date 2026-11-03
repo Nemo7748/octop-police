@@ -6,11 +6,63 @@ import type {
   DailyMemoryFile,
   FileTreeNode,
   WorkspaceFileContent,
+  WorkspaceDirectoryEntryDto,
+  WorkspaceRequestOptions,
+  WorkspaceTextContentDto,
   SyncFromOpenClawRequest,
   SyncFromOpenClawResponse,
 } from "../types";
 
+export function normalizeAgentDirectoryEntries(
+  entries: readonly WorkspaceDirectoryEntryDto[],
+): WorkspaceDirectoryEntryDto[] {
+  return entries.map((entry) => ({
+    name: entry.name,
+    path: entry.path,
+    is_dir: entry.is_dir,
+    size: entry.size ?? null,
+    modified_time: entry.modified_time ?? null,
+    ...(entry.children ? { children: entry.children } : {}),
+  }));
+}
+
 export const workspaceApi = {
+  listAgentDirectory: (
+    agentId: string,
+    path: string,
+    options: WorkspaceRequestOptions = {},
+  ): Promise<WorkspaceDirectoryEntryDto[]> =>
+    request<WorkspaceDirectoryEntryDto[]>(
+      `/agents/${encodeURIComponent(
+        agentId,
+      )}/workspace/tree?path=${encodeURIComponent(path)}`,
+      { signal: options.signal },
+    ).then(normalizeAgentDirectoryEntries),
+
+  readAgentFile: (
+    agentId: string,
+    path: string,
+    options: WorkspaceRequestOptions = {},
+  ): Promise<WorkspaceTextContentDto> =>
+    request<WorkspaceTextContentDto>(
+      `/agents/${encodeURIComponent(
+        agentId,
+      )}/workspace/file?path=${encodeURIComponent(path)}`,
+      { signal: options.signal },
+    ),
+
+  downloadAgentFile: (
+    agentId: string,
+    path: string,
+    options: WorkspaceRequestOptions = {},
+  ): Promise<Blob> =>
+    requestBlob(
+      `/agents/${encodeURIComponent(
+        agentId,
+      )}/workspace/download?path=${encodeURIComponent(path)}`,
+      { signal: options.signal },
+    ),
+
   getWorkspaceTree: () => request<FileTreeNode[]>("/workspace/tree"),
 
   getTreeChildren: (path: string) =>

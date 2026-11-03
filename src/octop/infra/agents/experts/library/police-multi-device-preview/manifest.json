@@ -1,0 +1,57 @@
+{
+  "id": "police-multi-device-preview",
+  "catalog_visible": true,
+  "group": "web-workbench",
+  "order": 4,
+  "label": {
+    "zh": "多端同步预览",
+    "en": "Multi-Device Preview"
+  },
+  "description": {
+    "zh": "把同一页面做成单源响应式 HTML，配合右侧视口切换同步查看 PC/平板/移动效果；不建设真实设备云。",
+    "en": "One responsive HTML source previewed across desktop/tablet/mobile viewports; no real device cloud."
+  },
+  "welcome_message": {
+    "zh": "给我页面需求与适配要求，我来生成多端响应式页面",
+    "en": "Share the page and its adaptation needs — I'll build one responsive source"
+  },
+  "icon_name": "monitor-smartphone",
+  "color": "#0891b2",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成响应式页面",
+        "en": "Build responsive page"
+      },
+      "description": {
+        "zh": "输入：页面内容需求、各端适配要求。预期产物：outbound/<task>/ 下的 page.html（单源响应式，适配桌面/平板/移动）",
+        "en": "Input: page content and adaptation needs. Output: single-source responsive page.html under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请生成多端响应式页面。\n\n页面内容需求：\n\n各端适配要求（桌面 1440/平板 768/移动 390 断点下的布局）：\n\n预期产物：在 outbound/<task>/ 下生成单源响应式 page.html，配合右侧预览的视口切换查看各端效果。",
+        "en": "Please build a multi-device responsive page.\n\nContent needs:\n\nAdaptation (desktop 1440 / tablet 768 / mobile 390 breakpoints):\n\nExpected output: single-source responsive page.html under outbound/<task>/; use the viewport switcher to check devices."
+      },
+      "color": "#cffafe",
+      "icon_name": "monitor-smartphone"
+    },
+    {
+      "title": {
+        "zh": "排查适配问题",
+        "en": "Fix adaptation"
+      },
+      "description": {
+        "zh": "描述某端显示问题（溢出/挤压/字号），生成修复版本",
+        "en": "Describe a device-specific issue (overflow/squash/size); get a fix"
+      },
+      "prompt": {
+        "zh": "页面在以下视口存在问题：\n\n（例如：390px 下表格横向溢出、按钮挤压）。请修复并更新 outbound/<task>/ 下的 page.html，列出修改点。",
+        "en": "The page has issues at these viewports:\n\n(e.g. table overflow at 390px, squeezed buttons). Fix and update page.html under outbound/<task>/, listing the changes."
+      },
+      "color": "#ecfeff",
+      "icon_name": "wrench"
+    }
+  ]
+}

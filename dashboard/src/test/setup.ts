@@ -41,6 +41,49 @@ afterEach(() => {
 });
 
 if (typeof window !== "undefined") {
+  // Node >=22 ships an experimental ``localStorage`` getter that yields
+  // ``undefined`` unless Node runs with ``--localstorage-file``, and it
+  // shadows jsdom's working Storage. Re-install a usable one when the
+  // getter comes up empty (prefer jsdom's, fall back to in-memory).
+  const globalScope = globalThis as { localStorage?: Storage };
+  let storageUsable = false;
+  try {
+    storageUsable = typeof globalScope.localStorage?.clear === "function";
+  } catch {
+    storageUsable = false;
+  }
+  if (!storageUsable) {
+    class MemoryStorage implements Storage {
+      private entries = new Map<string, string>();
+      get length(): number {
+        return this.entries.size;
+      }
+      clear(): void {
+        this.entries.clear();
+      }
+      getItem(key: string): string | null {
+        return this.entries.has(key)
+          ? (this.entries.get(key) as string)
+          : null;
+      }
+      key(index: number): string | null {
+        return Array.from(this.entries.keys())[index] ?? null;
+      }
+      removeItem(key: string): void {
+        this.entries.delete(key);
+      }
+      setItem(key: string, value: string): void {
+        this.entries.set(key, String(value));
+      }
+    }
+    const jsdomStorage = (window as { localStorage?: Storage }).localStorage;
+    Object.defineProperty(globalThis, "localStorage", {
+      value: jsdomStorage ?? new MemoryStorage(),
+      configurable: true,
+      writable: true,
+    });
+  }
+
   // matchMedia
   if (!window.matchMedia) {
     Object.defineProperty(window, "matchMedia", {

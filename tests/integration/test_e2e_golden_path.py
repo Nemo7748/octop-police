@@ -177,11 +177,12 @@ async def test_expert_to_chat_golden_path(env: Any) -> None:
     r = await c.post("/api/auth/login", json={"username": "bob", "password": "pw"})
     bob_auth = {"Authorization": f"Bearer {r.json()['access_token']}"}
 
-    # 3) list experts — the default expert must be present
+    # 3) list experts — the 11 visible police templates must be present
     r = await c.get("/api/experts", headers=bob_auth)
     assert r.status_code == 200
     expert_ids = [e["id"] for e in r.json()]
-    assert "general-assistant" in expert_ids
+    assert "police-data-dashboard" in expert_ids
+    assert "general-assistant" not in expert_ids
 
     # 4) get expert detail — must include file_contents
     r = await c.get("/api/experts/general-assistant", headers=bob_auth)

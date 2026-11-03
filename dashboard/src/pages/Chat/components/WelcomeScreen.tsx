@@ -33,6 +33,7 @@ interface WelcomeScreenProps {
   welcomeSuffix?: string | null;
   quickCards: WelcomeQuickCard[];
   hideMascot?: boolean;
+  workbenchOverview?: React.ReactNode;
 }
 
 export default function WelcomeScreen({
@@ -41,6 +42,7 @@ export default function WelcomeScreen({
   welcomeSuffix,
   quickCards,
   hideMascot = false,
+  workbenchOverview,
 }: WelcomeScreenProps) {
   const { t } = useTranslation();
   const [mascotSrc, setMascotSrc] = useState(MASCOT_PEEK);
@@ -104,6 +106,8 @@ export default function WelcomeScreen({
             )}
           </p>
         </div>
+
+        {workbenchOverview}
 
         {quickCards.length > 0 && (
           <WelcomeQuickCards

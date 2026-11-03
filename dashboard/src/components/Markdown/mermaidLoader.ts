@@ -12,7 +12,7 @@ export async function loadMermaid() {
     mermaidModule.initialize({
       startOnLoad: false,
       theme: "default",
-      securityLevel: "loose",
+      securityLevel: "strict",
       fontFamily: "inherit",
     });
   }

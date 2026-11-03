@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { usePoliceNavigation } from "../../../hooks/usePoliceNavigation";
 import { Dropdown, Tooltip } from "antd";
 import type { MenuProps } from "antd";
 import {
@@ -23,6 +23,7 @@ import {
   type ChannelKey,
 } from "../../Control/Channels/components/constants";
 import styles from "../index.module.less";
+import wbStyles from "../workbench.module.less";
 
 function isChannelKey(value: string): value is ChannelKey {
   return Object.prototype.hasOwnProperty.call(CHANNEL_ICONS, value);
@@ -296,6 +297,17 @@ function ActiveAgentCard({
       </div>
 
       <div className={styles.agentCardSessions}>
+        {sessionsEnabled && sessions.length > 0 && !searchQuery.trim() ? (
+          <div className={wbStyles.catalogMeta} data-testid="task-count">
+            {hasMore
+              ? t("policeWorkbench.catalog.loadedScope", {
+                  count: sessions.length,
+                })
+              : t("policeWorkbench.catalog.tasks", {
+                  count: sessions.length,
+                })}
+          </div>
+        ) : null}
         {!sessionsEnabled ? (
           <div className={styles.agentCardSessionsEmpty}>
             {t("chat.agentNotRunningHint")}
@@ -399,7 +411,7 @@ export default function SessionList({
   onPin,
 }: SessionListProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigation = usePoliceNavigation();
   const [searchQuery, setSearchQuery] = useState("");
 
   const sortedAgents = useMemo(
@@ -445,13 +457,23 @@ export default function SessionList({
           <button
             type="button"
             className={styles.sessionEmptyAgentsLink}
-            onClick={() => navigate("/experts")}
+            onClick={() =>
+              navigation.navigate({
+                sourceEntry: "session-list.create-expert",
+                capabilityId: "experts",
+              })
+            }
           >
             {t("chat.createExpert")}
           </button>
         </div>
       ) : (
         <div className={styles.sessionItems}>
+          <div className={wbStyles.catalogMeta} data-testid="space-count">
+            {t("policeWorkbench.catalog.spaces", {
+              count: sortedAgents.length,
+            })}
+          </div>
           {sortedAgents.map((agent) => {
             const expanded = agent.agent_id === expandedAgentId;
             if (expanded) {

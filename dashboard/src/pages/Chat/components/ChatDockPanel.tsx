@@ -18,6 +18,7 @@ interface ChatDockPanelProps {
   agentId: string;
   filePaths: string[];
   initialPath?: string | null;
+  revision?: number;
   /** Browser body */
   browserEnvironment?: DisplayEnvironment;
 }
@@ -36,6 +37,7 @@ const ChatDockPanel: React.FC<ChatDockPanelProps> = ({
   agentId,
   filePaths,
   initialPath,
+  revision,
   browserEnvironment = "desktop",
 }) => {
   const [fileMounted, setFileMounted] = useState(kind === "file");
@@ -69,6 +71,7 @@ const ChatDockPanel: React.FC<ChatDockPanelProps> = ({
             agentId={agentId}
             filePaths={filePaths}
             initialPath={initialPath}
+            revision={revision}
           />
         </div>
       )}

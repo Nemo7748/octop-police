@@ -35,6 +35,24 @@ export interface WorkspaceFileContent {
   size: number;
 }
 
+export interface WorkspaceDirectoryEntryDto {
+  name: string;
+  path: string;
+  is_dir: boolean;
+  size?: number | null;
+  modified_time?: string | null;
+  children?: WorkspaceDirectoryEntryDto[];
+}
+
+export interface WorkspaceTextContentDto {
+  path: string;
+  content: string;
+}
+
+export interface WorkspaceRequestOptions {
+  signal?: AbortSignal;
+}
+
 export interface SyncFromOpenClawRequest {
   openclaw_json_path?: string;
   sync_md?: boolean;

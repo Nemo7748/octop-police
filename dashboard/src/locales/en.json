@@ -94,7 +94,7 @@
     "SKILL_IMPORT_UNSUPPORTED_URL": "This skill URL source is not supported.",
     "SKILL_IMPORT_FAILED": "Skill import failed: {reason}",
     "SKILL_ALREADY_EXISTS": "Skill {name} already exists. Enable overwrite to replace it.",
-    "EXPERT_MARKET_FAILED": "Expert market is temporarily unavailable. Please try again later.",
+    "EXPERT_MARKET_FAILED": "Agent market is temporarily unavailable. Please try again later.",
     "DESKTOP_SESSION_LIMIT": "Too many concurrent remote desktop streams (max {limit}). Close other connections and try again.",
     "DESKTOP_CAPTURE_FAILED": "Screen capture failed repeatedly. On Linux servers restart the virtual desktop; on macOS grant Screen Recording and Accessibility, then reconnect."
   },
@@ -102,7 +102,7 @@
     "chat": "Chat",
     "common": "Common",
     "control": "Control",
-    "experts": "Experts",
+    "experts": "Agents",
     "tasks": "Tasks",
     "connectors": "Connectors",
     "acp": "ACP",
@@ -306,17 +306,17 @@
     }
   },
   "experts": {
-    "subtitle": "Spin up a pre-configured agent (with identity / soul / heartbeat baked in) from a scenario template. Each expert ships with its own system prompt — once created, just bind a provider and start it.",
-    "loadFailed": "Failed to load experts",
-    "loadDetailFailed": "Failed to load expert details",
-    "noExperts": "No experts available",
-    "selectExpertHint": "Pick an expert on the left to view details",
+    "subtitle": "Spin up a pre-configured agent (with identity / soul / heartbeat baked in) from a scenario template. Each agent ships with its own system prompt — once created, just bind a provider and start it.",
+    "loadFailed": "Failed to load agents",
+    "loadDetailFailed": "Failed to load agent details",
+    "noExperts": "No agents available",
+    "selectExpertHint": "Pick an agent on the left to view details",
     "creating": "Creating…",
-    "createFromExpert": "Create agent from this expert",
+    "createFromExpert": "Create agent from this agent template",
     "configFiles": "Config files ({{count}})",
     "clickToPreview": "Click to preview",
     "systemPromptTitle": "{{file}} · Full System Prompt",
-    "systemPromptHint": "All expert files are concatenated in manifest order into the system prompt below (joined with <code>\\n\\n</code>).",
+    "systemPromptHint": "All agent files are concatenated in manifest order into the system prompt below (joined with <code>\\n\\n</code>).",
     "createWithExpertTitle": "Create agent from {{name}}",
     "agentNameLabel": "Agent name",
     "pleaseEnterName": "Please enter a name",
@@ -335,36 +335,36 @@
       "memory": "Memory",
       "proactive": "Proactive Push"
     },
-    "myExperts": "My Experts",
-    "expertLibrary": "Built-in Experts",
-    "expertMarket": "Expert Market",
+    "myExperts": "My Agents",
+    "expertLibrary": "Built-in Agents",
+    "expertMarket": "Agent Market",
     "viewCard": "Cards",
     "viewTable": "Table",
     "mbtiDefault": "Default",
     "mbtiViewDetail": "Click to view personality details",
-    "agentId": "Expert ID",
-    "copyAgentId": "Click to copy expert ID",
+    "agentId": "Agent ID",
+    "copyAgentId": "Click to copy agent ID",
     "table": {
       "name": "Name",
-      "agentId": "Expert ID",
+      "agentId": "Agent ID",
       "state": "State",
       "description": "Description",
       "model": "Model",
       "persona": "Persona",
       "actions": "Actions"
     },
-    "totalAgents": "{{count}} expert(s)",
-    "totalLibrary": "{{count}} built-in expert(s)",
-    "totalMarket": "{{count}} market expert(s)",
+    "totalAgents": "{{count}} agent(s)",
+    "totalLibrary": "{{count}} built-in agent(s)",
+    "totalMarket": "{{count}} market agent(s)",
     "addFromLibrary": "+ Add from Built-in",
-    "emptyMyExperts": "No experts yet",
-    "emptyMyExpertsHint": "Pick a template from Built-in Experts or the Expert Market to create your first AI expert.",
-    "goToLibrary": "Go to Built-in Experts",
-    "emptyLibrary": "No built-in experts available",
-    "emptyLibraryHint": "Please ask your administrator to configure built-in experts.",
-    "marketLoadFailed": "Failed to load the expert market",
-    "marketBackendMissing": "The backend has not loaded the Expert Market API yet. Restart Octop or confirm it is running this updated code.",
-    "marketSearchPlaceholder": "Search expert market",
+    "emptyMyExperts": "No agents yet",
+    "emptyMyExpertsHint": "Pick a template from Built-in Agents or the Agent Market to create your first AI agent.",
+    "goToLibrary": "Go to Built-in Agents",
+    "emptyLibrary": "No built-in agents available",
+    "emptyLibraryHint": "Please ask your administrator to configure built-in agents.",
+    "marketLoadFailed": "Failed to load the agent market",
+    "marketBackendMissing": "The backend has not loaded the Agent Market API yet. Restart Octop or confirm it is running this updated code.",
+    "marketSearchPlaceholder": "Search agent market",
     "sceneAll": "All",
     "scenes": {
       "academic": "Academic",
@@ -382,15 +382,15 @@
       "mysticism": "Mysticism",
       "tech": "Tech"
     },
-    "emptyMarket": "No market experts available",
+    "emptyMarket": "No market agents available",
     "emptyMarketHint": "Try another keyword or check again later.",
-    "noMarketDescription": "This market expert has no description yet.",
+    "noMarketDescription": "This market agent has no description yet.",
     "marketSkillCount": "{{count}} skill(s)",
     "createFromMarket": "Create from Market",
     "createAgainFromMarket": "Create another",
-    "marketCreateSuccess": "Created from Expert Market: {{name}}",
+    "marketCreateSuccess": "Created from Agent Market: {{name}}",
     "marketCreateSuccessEnriching": "Created {{name}}. Welcome cards are being refined in the background and will update when you open the chat.",
-    "marketDetailLoadFailed": "Failed to load expert details",
+    "marketDetailLoadFailed": "Failed to load agent details",
     "marketSource": "SkillHub",
     "marketIncludedSkills": "Included Skills",
     "marketQuickPrompts": "Quick-start cards",
@@ -403,7 +403,7 @@
     "installedBadge": "Installed",
     "installAgain": "Install Again",
     "createFromTemplate": "+ Create from this template",
-    "editExpert": "Edit Expert",
+    "editExpert": "Edit Agent",
     "basicInfo": "Basic Info",
     "agentName": "Name",
     "agentDescription": "Description",
@@ -482,8 +482,8 @@
     "noWorkspaceFiles": "No editable config files in workspace",
     "workspaceFilesFailed": "Failed to load workspace config files",
     "skillFilesTitle": "Skills ({{count}})",
-    "skillFilesHint": "Skills bundled with this expert. They will be written to the workspace skills/ directory after creation.",
-    "noSkillFiles": "This expert has no bundled skills",
+    "skillFilesHint": "Skills bundled with this agent. They will be written to the workspace skills/ directory after creation.",
+    "noSkillFiles": "This agent has no bundled skills",
     "subagentFilesTitle": "Subagents ({{count}})",
     "subagentFilesHint": "Subagents defined in the workspace agents/ directory. The main agent delegates tasks to them via the task tool.",
     "noSubagentFiles": "No subagents in workspace",
@@ -530,8 +530,8 @@
     }
   },
   "agent_errors": {
-    "no_models_configured": "No models are configured. Go to Settings → Models to add a Provider, then enable this expert again.",
-    "model_ref_unavailable": "The default model is unavailable or disabled. Check Settings → Models or update this expert's default model, then try again."
+    "no_models_configured": "No models are configured. Go to Settings → Models to add a Provider, then enable this agent again.",
+    "model_ref_unavailable": "The default model is unavailable or disabled. Check Settings → Models or update this agent's default model, then try again."
   },
   "chat": {
     "thinking": "Thinking",
@@ -558,16 +558,16 @@
     "send": "Send",
     "agentNoDescription": "No description",
     "noSessionsYet": "Send a message to start chatting",
-    "agentNotRunning": "This expert is not enabled",
-    "agentNotRunningHint": "Enable it on the Experts page before starting a chat.",
-    "agentFailed": "Expert failed to start",
-    "agentFailedHint": "Check the error below, fix the configuration, then enable the expert again.",
-    "agentStarting": "Starting expert…",
-    "agentStartingHint": "Please wait until the expert is running.",
-    "goToExperts": "Go to Experts",
-    "noAgentsTitle": "No experts yet",
-    "noAgentsHint": "Pick a template from the Expert List to create your first AI expert.",
-    "createExpert": "Create an expert",
+    "agentNotRunning": "This agent is not enabled",
+    "agentNotRunningHint": "Enable it on the Agents page before starting a chat.",
+    "agentFailed": "Agent failed to start",
+    "agentFailedHint": "Check the error below, fix the configuration, then enable the agent again.",
+    "agentStarting": "Starting agent…",
+    "agentStartingHint": "Please wait until the agent is running.",
+    "goToExperts": "Go to Agents",
+    "noAgentsTitle": "No agents yet",
+    "noAgentsHint": "Pick a template from the Agent List to create your first AI agent.",
+    "createExpert": "Create an agent",
     "pickAgent": "Select an Agent first",
     "bootstrapKickoff": "Hi — let's get started",
     "createSessionFailed": "Failed to create a session — please try again",
@@ -580,17 +580,17 @@
     "expandHistorySidebar": "Show conversation history",
     "collapseHistorySidebar": "Hide conversation history",
     "agentProfile": {
-      "open": "View expert details",
-      "title": "Expert details"
+      "open": "View agent details",
+      "title": "Agent details"
     },
     "composerMore": "More tools",
     "skillPicker": "Select skills",
     "skillPickerSearch": "Search skills",
     "skillPickerEmpty": "No skills available",
-    "expertPicker": "Select experts",
-    "expertPickerSearch": "Search experts",
-    "expertPickerEmpty": "No other experts available",
-    "expertPickerManage": "Manage experts",
+    "expertPicker": "Select agents",
+    "expertPickerSearch": "Search agents",
+    "expertPickerEmpty": "No other agents available",
+    "expertPickerManage": "Manage agents",
     "composerContextLabel": "Message context",
     "contextWindow": {
       "tooltip": "Context {{used}} / {{max}} · {{percent}}% (last model request)",
@@ -2231,17 +2231,17 @@
       "contextEmpty": "No context yet",
       "sendTo": "Commands go to: {{session}}",
       "noTerminal": "Please open a terminal session first",
-      "inputPlaceholder": "Ask the ops engineer...",
+      "inputPlaceholder": "Ask the ops agent...",
       "send": "Send",
       "modeAssist": "Assist",
       "modeAutopilot": "Autopilot",
       "execBtn": "Run in terminal",
       "copied": "Copied",
-      "gateTitle": "No ops engineer agent yet",
-      "gateDesc": "The AI terminal needs an ops engineer agent to generate accurate commands",
-      "gateCreate": "Create ops engineer",
+      "gateTitle": "No ops agent yet",
+      "gateDesc": "The AI terminal needs an ops agent to generate accurate commands",
+      "gateCreate": "Create ops agent",
       "gateCreating": "Creating...",
-      "gateNoProvider": "Ops engineer has no model configured",
+      "gateNoProvider": "Ops agent has no model configured",
       "gateConfigureLink": "Configure now",
       "autopilotGoalPlaceholder": "Describe what you want to accomplish, e.g.: package the project as a Docker image...",
       "autopilotPlan": "Execution plan",
@@ -2346,7 +2346,7 @@
     "bookmarkSaveFailed": "Failed to save bookmarks",
     "ai": {
       "title": "AI Assistant",
-      "expert": "Expert",
+      "expert": "Agent",
       "agent": "Agent",
       "profile": "Profile",
       "currentUrl": "Current page",
@@ -2784,7 +2784,7 @@
     }
   },
   "agentSelector": {
-    "label": "Active Expert"
+    "label": "Active Agent"
   },
   "login": {
     "title": "Sign in",
@@ -3108,8 +3108,8 @@
   },
   "pageShell": {
     "experts": {
-      "title": "Experts",
-      "subtitle": "Create and manage your AI experts, or pick a scenario template to get started quickly."
+      "title": "Agents",
+      "subtitle": "Create and manage your AI agents, or pick a scenario template to get started quickly."
     },
     "tasks": {
       "title": "Tasks",
@@ -3141,7 +3141,7 @@
     },
     "subagents": {
       "title": "Subagents",
-      "subtitle": "Manage subagents for the current expert — install or edit subagent skills"
+      "subtitle": "Manage subagents for the current agent — install or edit subagent skills"
     },
     "memory": {
       "title": "Memory",
@@ -3202,6 +3202,185 @@
     "terminal": {
       "title": "Terminal AI+",
       "subtitle": "Run an interactive shell terminal in the browser"
+    }
+  },
+  "policeWorkbench": {
+    "brand": {
+      "name": "PoliceBuddy",
+      "subtitle": "Police Agent Workbench"
+    },
+    "home": {
+      "groups": {
+        "police-development": "Police Agent Development",
+        "web-workbench": "Web Workbench"
+      },
+      "skillsTitle": "Built-in Skills",
+      "skillsSubtitle": "Click a skill card to select it with a prefilled prompt, then confirm to send",
+      "noDescription": "No description yet",
+      "launch": "Launch",
+      "creating": "Creating…",
+      "selectInstance": "This template has multiple instances. Select the one to use",
+      "instanceUnavailable": "The selected instance is not ready. Start the agent first",
+      "agentCreated": "Agent \"{{name}}\" has been created",
+      "launchFailed": "Launch failed. Please retry",
+      "catalogUnsupported": "Backend catalog version not supported. Cannot show the police agent group catalog",
+      "loadFailed": "Failed to load the catalog. Please retry",
+      "retry": "Retry",
+      "emptyCatalog": "No agent templates available",
+      "noSkills": "No recommended built-in skills",
+      "skillUnavailable": "This skill is no longer available and has been removed from this selection",
+      "prefillHint": "Prompt prefilled. Confirm and send",
+      "overviewTitle": "Tasks & Files"
+    },
+    "nav": {
+      "newTask": "New Task",
+      "assistants": "Assistants",
+      "projects": "Projects",
+      "expertsSkillsConnectors": "Agents · Skills · Connectors",
+      "cronJobs": "Scheduled Tasks",
+      "library": "Library",
+      "more": "More",
+      "settings": "Settings",
+      "messages": "Messages"
+    },
+    "catalog": {
+      "tasks": "Tasks({count})",
+      "spaces": "Spaces({count})",
+      "searchPlaceholder": "Search by name",
+      "searchEmpty": "No matches",
+      "loadedScope": "{count} loaded",
+      "loadMore": "Load more",
+      "retry": "Retry",
+      "emptyTasks": "No tasks yet",
+      "emptySpaces": "No spaces yet",
+      "loadFailed": "Failed to load",
+      "unknown": "Unknown",
+      "notAvailable": "Unavailable",
+      "noPermission": "No permission"
+    },
+    "runStatus": {
+      "running": "Running",
+      "done": "Done",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "unknown": "Status unknown"
+    },
+    "overview": {
+      "policeMakerTitle": "Police Agent Maker",
+      "policeMakerDescription": "Open agents and templates to build police agents",
+      "webWorkbenchTitle": "Web Workbench",
+      "webWorkbenchDescription": "Start chatting and collaborating in the current task",
+      "emptyCategory": "No capabilities in this category",
+      "viewAllArtifacts": "View all artifacts({count})",
+      "viewAllChanges": "View all changes({count})",
+      "statsIncomplete": "Stats incomplete",
+      "artifactsTitle": "Workspace files",
+      "noTaskChanges": "No session change records available in this workspace"
+    },
+    "tags": {
+      "office": "Office",
+      "coding": "Coding",
+      "design": "Design"
+    },
+    "brief": {
+      "title": "Next Session Card",
+      "delivered": "Delivered this session",
+      "nextSteps": "What to do next",
+      "materials": "Materials to bring",
+      "empty": "No records"
+    },
+    "composer": {
+      "placeholder": "What can I do for you today? @ to reference conversation files, / for skills and commands",
+      "role": "Role",
+      "model": "Model",
+      "selectRole": "Select role",
+      "selectModel": "Select model",
+      "noRole": "No roles available",
+      "noModel": "No models available",
+      "configure": "Configure",
+      "send": "Send",
+      "cancelRun": "Cancel run"
+    },
+    "modes": {
+      "ask": "Ask",
+      "act": "Act",
+      "plan": "Plan"
+    },
+    "plan": {
+      "title": "Pre-execution Confirmation",
+      "goal": "Goal",
+      "noGoal": "No text goal provided",
+      "resources": "Resources",
+      "workflow": "Confirm goal and resources → call the current Agent after confirmation → show execution, results and artifacts",
+      "notice": "No data queries or document generation will start before confirmation",
+      "confirm": "Confirm and run",
+      "cancel": "Cancel plan",
+      "cancelled": "Plan not executed",
+      "stale": "Goal or resources changed, please review again"
+    },
+    "references": {
+      "files": "Conversation files",
+      "skills": "Skills",
+      "connectors": "Connectors",
+      "agents": "Collaborator agents",
+      "commands": "Commands",
+      "empty": "No matches",
+      "remove": "Remove reference",
+      "invalid": "Reference invalid, remove or reselect",
+      "validating": "Validating references"
+    },
+    "execution": {
+      "queued": "Recorded, will submit after this run",
+      "editGuidance": "Edit",
+      "revokeGuidance": "Revoke",
+      "retry": "Retry",
+      "resend": "Resend"
+    },
+    "navigation": {
+      "capabilityUnavailable": "This capability is unavailable",
+      "pageLoadFailed": "Failed to load the page. Please retry",
+      "forbidden": "You do not have access",
+      "contextRequired": "Select an available agent or task first",
+      "retry": "Retry"
+    },
+    "preview": {
+      "source": "Source",
+      "rendered": "Preview",
+      "refresh": "Refresh",
+      "download": "Download",
+      "close": "Close",
+      "loading": "Loading document",
+      "generating": "Artifact is being generated",
+      "updating": "Artifact is updating",
+      "updateFailed": "Artifact update failed. Retry available",
+      "deleted": "This artifact was deleted or is unavailable",
+      "newArtifactAvailable": "A new artifact is available",
+      "backgroundUpdated": "An update is available in the background",
+      "empty": "Document is empty",
+      "failed": "Failed to load document",
+      "forbidden": "No permission or document expired",
+      "unsupported": "This type cannot be viewed online",
+      "renderFailed": "Render failed, view source or refresh",
+      "manifestPending": "Artifact manifest is being generated. Please wait",
+      "manifestInvalid": "Artifact manifest is missing or invalid. Preview unavailable",
+      "demoData": "Demo data",
+      "humanReview": "Output is for reference only and requires human review",
+      "viewport": {
+        "desktop": "Desktop",
+        "tablet": "Tablet",
+        "mobile": "Mobile"
+      },
+      "emptySelection": "No document selected"
+    },
+    "environment": {
+      "local": "Local",
+      "unknown": "Environment unknown",
+      "connected": "Service connected",
+      "disconnected": "Connection failed",
+      "retry": "Retry connection"
+    },
+    "footer": {
+      "copyright": "柠企萌 © XOXO"
     }
   }
 }
