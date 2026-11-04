@@ -16,14 +16,14 @@ async def test_list_experts_returns_bundled_library(env: Any) -> None:
     assert r.status_code == 200
     rows = r.json()
     ids = {row["id"] for row in rows}
-    # Only the 11 police templates are visible; legacy ones stay reachable by id.
-    assert len(rows) == 11
+    # Only the 12 police templates are visible; legacy ones stay reachable by id.
+    assert len(rows) == 12
     assert "police-data-dashboard" in ids
     assert "general-assistant" not in ids
     assert "default" not in ids
     sample = next(r for r in rows if r["id"] == "police-data-dashboard")
     assert "label" in sample and "zh" in sample["label"] and "en" in sample["label"]
-    assert sample["group"] == "police-development"
+    assert sample["group"] == "web-workbench"
     assert isinstance(sample["order"], int)
 
 

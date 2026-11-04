@@ -1,6 +1,6 @@
 {
   "id": "police-template-market",
-  "catalog_visible": true,
+  "catalog_visible": false,
   "group": "web-workbench",
   "order": 5,
   "label": {

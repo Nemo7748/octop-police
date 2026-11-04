@@ -1,6 +1,6 @@
 {
   "id": "police-visual-modeling",
-  "catalog_visible": true,
+  "catalog_visible": false,
   "group": "police-development",
   "order": 4,
   "label": {

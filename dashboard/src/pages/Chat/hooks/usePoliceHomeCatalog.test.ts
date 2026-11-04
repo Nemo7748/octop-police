@@ -43,22 +43,23 @@ function expert(
 }
 
 const DEV_SLUGS = [
-  "police-data-dashboard",
-  "police-field-offline-collection",
-  "police-video-geo-location",
-  "police-visual-modeling",
+  "police-officer-workbench",
+  "police-nl-assistant",
+  "police-report-materials",
   "police-risk-warning",
+  "police-legal-matching",
+  "police-missing-children",
+  "police-nl-visualization",
 ];
 const WEB_SLUGS = [
-  "police-officer-workbench",
-  "police-nl-visualization",
-  "police-drag-visual-editor",
-  "police-multi-device-preview",
-  "police-template-market",
-  "police-release-review",
+  "police-doc-assistant",
+  "police-dossier-review",
+  "police-incident-analysis",
+  "police-data-dashboard",
+  "police-briefing-generator",
 ];
 
-function elevenExperts(): Record<string, unknown>[] {
+function twelveExperts(): Record<string, unknown>[] {
   return [
     ...DEV_SLUGS.map((slug, i) => expert(slug, "police-development", i + 1)),
     ...WEB_SLUGS.map((slug, i) => expert(slug, "web-workbench", i + 1)),
@@ -130,7 +131,7 @@ function setupRoutes(routes: RouteTable): void {
 
 function baseRoutes(extras: RouteTable = {}): RouteTable {
   return {
-    "/experts": elevenExperts(),
+    "/experts": twelveExperts(),
     "/agents": [],
     "/agents/a1/skills": sixSkills(),
     ...extras,
@@ -142,7 +143,7 @@ describe("usePoliceHomeCatalog", () => {
     vi.clearAllMocks();
   });
 
-  it("11 项按后端 group/order 分组排序，技能按 home_entry 过滤排序", async () => {
+  it("12 项按后端 group/order 分组排序，技能按 home_entry 过滤排序", async () => {
     setupRoutes(
       baseRoutes({
         "/agents": [
@@ -166,9 +167,7 @@ describe("usePoliceHomeCatalog", () => {
     expect(web.agents.map((a) => a.expertId)).toEqual(WEB_SLUGS);
 
     expect(
-      data.agentsByTemplate
-        .get("police-data-dashboard")
-        ?.map((a) => a.agentId),
+      data.agentsByTemplate.get("police-data-dashboard")?.map((a) => a.agentId),
     ).toEqual(["a1", "a2"]);
     expect(
       data.agentsByTemplate.get("police-nl-visualization")?.[0]?.state,
@@ -186,7 +185,7 @@ describe("usePoliceHomeCatalog", () => {
 
   it("旧后端缺少 group/order 时返回目录版本不支持降级态", async () => {
     setupRoutes({
-      "/experts": elevenExperts().map((row) => {
+      "/experts": twelveExperts().map((row) => {
         const { group, order, ...rest } = row as Record<string, unknown>;
         void group;
         void order;
@@ -200,9 +199,7 @@ describe("usePoliceHomeCatalog", () => {
     expect(isCatalogUnsupported(result.current.state)).toBe(true);
     if (result.current.state.status !== "error") return;
     expect(result.current.state.error.retryable).toBe(false);
-    expect(result.current.state.error.message).toBe(
-      CATALOG_UNSUPPORTED_MARKER,
-    );
+    expect(result.current.state.error.message).toBe(CATALOG_UNSUPPORTED_MARKER);
   });
 
   it("templates 失败进入可重试错误，独立重试后恢复", async () => {
@@ -247,7 +244,9 @@ describe("usePoliceHomeCatalog", () => {
     expect(result.current.state.data.agentGroups).toHaveLength(2);
     expect(result.current.state.data.agentsByTemplate.size).toBe(0);
 
-    setupRoutes(baseRoutes({ "/agents": [agent("a9", "police-risk-warning")] }));
+    setupRoutes(
+      baseRoutes({ "/agents": [agent("a9", "police-risk-warning")] }),
+    );
     await act(async () => {
       result.current.reloadSource("instances");
     });
@@ -326,7 +325,7 @@ describe("usePoliceHomeCatalog", () => {
         });
       }
       if (path === "/agents/a2/skills") return sixSkills();
-      if (path === "/experts") return elevenExperts();
+      if (path === "/experts") return twelveExperts();
       if (path === "/agents") return [];
       throw new Error(`unexpected request path: ${path}`);
     });

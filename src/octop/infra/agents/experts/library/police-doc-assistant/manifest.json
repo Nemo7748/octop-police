@@ -1,0 +1,41 @@
+{
+  "id": "police-doc-assistant",
+  "catalog_visible": true,
+  "group": "web-workbench",
+  "order": 1,
+  "label": {
+    "zh": "智能公文助手",
+    "en": "Smart Document Assistant"
+  },
+  "description": {
+    "zh": "结合案情要素与标准模板，一键生成规范警务公文。",
+    "en": "Generate standard police documents from case facts and standard templates in one click."
+  },
+  "welcome_message": {
+    "zh": "告诉我公文类型与案情要素，我用内置 docx 技能生成规范公文",
+    "en": "Tell me the document type and case facts — I'll generate a standard document with the built-in docx skill"
+  },
+  "icon_name": "file-pen-line",
+  "color": "#2563eb",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成规范公文（DOCX）",
+        "en": "Generate document (DOCX)"
+      },
+      "description": {
+        "zh": "输入：公文类型、案情要素与模板要求。预期产物：outbound/<task>/ 下的 document.docx（内置 docx 技能生成）与 document.md（可预览文本）",
+        "en": "Input: document type, case facts and template requirements. Output: document.docx (via built-in docx skill) and document.md under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请生成规范警务公文。\n\n公文类型（如请示、报告、通报、函）：\n\n案情要素与主要内容：\n\n模板与格式要求：\n\n预期产物：调用内置 docx 技能，在 outbound/<task>/ 下生成 document.docx，并同时输出 document.md 便于预览。结构符合公文规范（标题、主送单位、正文、落款），示例内容标注为演示数据。",
+        "en": "Please generate a standard police document.\n\nDocument type (request, report, bulletin, letter):\n\nCase facts and main content:\n\nTemplate and format requirements:\n\nExpected output: use the built-in docx skill to produce document.docx under outbound/<task>/ plus document.md for preview. Follow official document structure (title, addressee, body, signature); label sample content as demo data."
+      },
+      "color": "#dbeafe",
+      "icon_name": "file-pen-line"
+    }
+  ]
+}

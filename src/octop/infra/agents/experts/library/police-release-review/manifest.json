@@ -1,6 +1,6 @@
 {
   "id": "police-release-review",
-  "catalog_visible": true,
+  "catalog_visible": false,
   "group": "web-workbench",
   "order": 6,
   "label": {

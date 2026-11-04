@@ -1,21 +1,21 @@
 {
   "id": "police-data-dashboard",
   "catalog_visible": true,
-  "group": "police-development",
-  "order": 1,
+  "group": "web-workbench",
+  "order": 4,
   "label": {
-    "zh": "数据统计看板",
-    "en": "Data Dashboard Builder"
+    "zh": "警务数据大屏",
+    "en": "Policing Data Screen"
   },
   "description": {
-    "zh": "基于你提供的表格、指标和统计口径，生成可预览的数据统计看板、图表配置与查询 SQL。",
-    "en": "Turn your tables, metrics and criteria into a previewable dashboard with chart config and SQL."
+    "zh": "零代码拖拽配置，实时可视化呈现辖区治安态势与警力分布，赋能指挥决策。",
+    "en": "No-code drag-and-drop dashboards showing live jurisdiction safety and force distribution for command decisions."
   },
   "welcome_message": {
-    "zh": "把表格和指标口径发给我，我来生成统计看板",
-    "en": "Share your tables and metrics — I'll build the dashboard"
+    "zh": "告诉我大屏要展示的指标与布局，我来生成数据大屏",
+    "en": "Tell me the metrics and layout — I'll build the data screen"
   },
-  "icon_name": "bar-chart-3",
+  "icon_name": "monitor",
   "color": "#2563eb",
   "prompt_files": [
     "SOUL.md"
@@ -23,35 +23,19 @@
   "quick_prompts": [
     {
       "title": {
-        "zh": "生成统计看板",
-        "en": "Build a dashboard"
+        "zh": "生成警务数据大屏",
+        "en": "Build data screen"
       },
       "description": {
-        "zh": "输入：粘贴表格数据或上传 CSV，说明指标口径与关注维度。预期产物：outbound/<task>/ 下的 dashboard.html、chart-config.json 与 query.sql",
-        "en": "Input: paste table data or upload a CSV and describe metrics. Output: dashboard.html, chart-config.json and query.sql under outbound/<task>/"
+        "zh": "输入：辖区指标数据或上传 CSV，说明治安态势与警力分布的展示维度。预期产物：outbound/<task>/ 下的 dashboard.html、chart-config.json 与 query.sql",
+        "en": "Input: jurisdiction metrics or CSV, plus display dimensions for safety and force distribution. Output: dashboard.html, chart-config.json and query.sql under outbound/<task>/"
       },
       "prompt": {
-        "zh": "请根据我提供的数据生成数据统计看板。\n\n数据（粘贴表格或说明文件名）：\n\n统计口径与关注指标：\n\n预期产物：在 outbound/<task>/ 下生成 dashboard.html（含图表）、chart-config.json（图表配置）和 query.sql（查询语句）。没有真实数据库时只使用我提供的数据或明确标注的演示样例。",
-        "en": "Please build a data dashboard from the data I provide.\n\nData (paste table or file name):\n\nMetrics and criteria:\n\nExpected output: dashboard.html (with charts), chart-config.json and query.sql under outbound/<task>/. Without a real database, use only my data or clearly labeled demo samples."
+        "zh": "请生成警务数据大屏页面。\n\n数据（粘贴表格或说明文件名）：\n\n展示维度（辖区治安态势、警力分布、重点指标）：\n\n预期产物：在 outbound/<task>/ 下生成 dashboard.html（大屏风格自包含页面，含图表）、chart-config.json（图表配置）和 query.sql（查询语句）。没有真实数据库时只使用我提供的数据或明确标注的演示样例。",
+        "en": "Please build a policing data screen.\n\nData (paste table or file name):\n\nDimensions (jurisdiction safety, force distribution, key metrics):\n\nExpected output: dashboard.html (self-contained big-screen page with charts), chart-config.json and query.sql under outbound/<task>/. Without a real database, use only my data or clearly labeled demo samples."
       },
       "color": "#dbeafe",
-      "icon_name": "bar-chart-3"
-    },
-    {
-      "title": {
-        "zh": "设计指标口径",
-        "en": "Define metrics"
-      },
-      "description": {
-        "zh": "描述业务目标，帮你把指标拆解为可统计的口径与图表方案",
-        "en": "Describe your goal and get measurable metric definitions with chart plans"
-      },
-      "prompt": {
-        "zh": "我想为以下业务目标设计统计指标口径，请给出指标定义、统计维度和看板图表方案：\n\n",
-        "en": "I want to define metrics for the following goal. Please give metric definitions, dimensions and chart plans:\n\n"
-      },
-      "color": "#eff6ff",
-      "icon_name": "target"
+      "icon_name": "monitor"
     }
   ]
 }

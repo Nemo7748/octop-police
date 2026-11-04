@@ -1,6 +1,6 @@
 {
   "id": "police-video-geo-location",
-  "catalog_visible": true,
+  "catalog_visible": false,
   "group": "police-development",
   "order": 3,
   "label": {

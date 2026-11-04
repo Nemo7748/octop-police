@@ -1,19 +1,19 @@
 {
   "id": "police-nl-visualization",
   "catalog_visible": true,
-  "group": "web-workbench",
-  "order": 2,
+  "group": "police-development",
+  "order": 7,
   "label": {
-    "zh": "AI 自然语言生成可视化",
-    "en": "NL to Visualization"
+    "zh": "数据可视化建模助手",
+    "en": "Visual Modeling Assistant"
   },
   "description": {
-    "zh": "把自然语言需求与表格数据变成图表 HTML、SQL/配置与结果说明；数据来自用户输入或标注的演示样例。",
-    "en": "Turn natural-language requests and tables into chart HTML, SQL/config and notes; user data or labeled demo samples."
+    "zh": "通过自然语言指令，自动将繁杂警务数据转化为可视化图表与关系图谱，零代码构建分析模型。",
+    "en": "Turn complex policing data into charts and relationship graphs via natural language — no-code modeling."
   },
   "welcome_message": {
-    "zh": "用一句话描述你想看的图表，我来生成",
-    "en": "Describe the chart you want in one sentence — I'll build it"
+    "zh": "用一句话描述想分析的警务数据，我来生成图表与模型",
+    "en": "Describe the policing data to analyze — I'll build charts and models"
   },
   "icon_name": "sparkles",
   "color": "#7c3aed",
@@ -23,35 +23,19 @@
   "quick_prompts": [
     {
       "title": {
-        "zh": "一句话生成图表",
-        "en": "Chart from a sentence"
+        "zh": "一句话构建可视化模型",
+        "en": "Model from a sentence"
       },
       "description": {
-        "zh": "输入：自然语言需求 + 表格数据（或使用演示样例）。预期产物：outbound/<task>/ 下的 chart.html（图表）、query.sql 与 result-notes.md",
-        "en": "Input: request + table data (or demo sample). Output: chart.html, query.sql and result-notes.md under outbound/<task>/"
+        "zh": "输入：自然语言分析需求 + 表格数据（或使用演示样例）。预期产物：outbound/<task>/ 下的 chart.html（图表/关系图谱）、query.sql 与 result-notes.md",
+        "en": "Input: analysis request + table data (or demo sample). Output: chart.html (charts/graph), query.sql and result-notes.md under outbound/<task>/"
       },
       "prompt": {
-        "zh": "请用自然语言需求生成可视化图表。\n\n我的需求：\n\n数据（粘贴表格，或回复\"用演示样例\"）：\n\n预期产物：在 outbound/<task>/ 下生成 chart.html（可交互图表）、query.sql（对应查询）和 result-notes.md（读数说明）。数据不足时使用明确标注的演示样例。",
-        "en": "Please build a chart from my request.\n\nRequest:\n\nData (paste table, or reply \"use demo sample\"):\n\nExpected output: chart.html, query.sql and result-notes.md under outbound/<task>/. Demo samples clearly labeled when data is insufficient."
+        "zh": "请用自然语言需求构建数据可视化模型。\n\n我的分析需求（图表或关系图谱）：\n\n数据（粘贴表格，或回复\"用演示样例\"）：\n\n预期产物：在 outbound/<task>/ 下生成 chart.html（可交互图表或关系图谱）、query.sql（对应查询）和 result-notes.md（模型口径与读数说明）。数据不足时使用明确标注的演示样例。",
+        "en": "Please build a visual model from my request.\n\nAnalysis request (chart or relationship graph):\n\nData (paste table, or reply \"use demo sample\"):\n\nExpected output: chart.html (interactive chart or graph), query.sql and result-notes.md under outbound/<task>/. Demo samples clearly labeled when data is insufficient."
       },
       "color": "#ede9fe",
       "icon_name": "sparkles"
-    },
-    {
-      "title": {
-        "zh": "改图",
-        "en": "Refine chart"
-      },
-      "description": {
-        "zh": "对已生成的图表说\"换成折线图/只看本月/加同比\"，直接更新页面",
-        "en": "Say \"switch to line chart / this month only / add YoY\" and get an update"
-      },
-      "prompt": {
-        "zh": "请把上一次生成的图表调整为：\n\n（例如：换成折线图、只看本月、增加同比列），并更新 outbound/<task>/ 下的 chart.html 与 result-notes.md。",
-        "en": "Please adjust the last chart: \n\n(e.g. switch to line chart, this month only, add YoY) and update chart.html and result-notes.md under outbound/<task>/."
-      },
-      "color": "#f5f3ff",
-      "icon_name": "line-chart"
     }
   ]
 }

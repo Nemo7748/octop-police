@@ -1,0 +1,41 @@
+{
+  "id": "police-incident-analysis",
+  "catalog_visible": true,
+  "group": "web-workbench",
+  "order": 3,
+  "label": {
+    "zh": "警情智能研判",
+    "en": "Incident Intelligence Analysis"
+  },
+  "description": {
+    "zh": "汇聚多维警情数据，自动挖掘高发时空规律，一键生成研判报告辅助精准防控。",
+    "en": "Fuse multi-dimensional incident data, mine temporal-spatial patterns and generate analysis reports for targeted prevention."
+  },
+  "welcome_message": {
+    "zh": "提供警情数据，我来挖掘高发规律并生成研判报告",
+    "en": "Provide incident data — I'll mine patterns and draft the analysis report"
+  },
+  "icon_name": "line-chart",
+  "color": "#0f766e",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成警情研判报告",
+        "en": "Generate analysis report"
+      },
+      "description": {
+        "zh": "输入：警情记录数据（时间、地点、类型等维度）。预期产物：outbound/<task>/ 下的 analysis.md（研判报告）与 patterns.html（时空规律图表）",
+        "en": "Input: incident records (time, location, type). Output: analysis.md (report) and patterns.html (pattern charts) under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请对以下警情数据做智能研判。\n\n警情数据（含时间、地点、警情类型等字段）：\n\n研判重点（高发时段/区域/类型）：\n\n预期产物：在 outbound/<task>/ 下生成 analysis.md（高发时空规律、趋势分析与精准防控建议）和 patterns.html（时空分布可视化图表）。数据不足时使用明确标注的演示数据并说明局限，不虚构统计结论。",
+        "en": "Please analyze the following incident data.\n\nIncident data (time, location, incident type):\n\nFocus (peak hours/areas/types):\n\nExpected output: analysis.md (temporal-spatial patterns, trends and targeted prevention advice) and patterns.html (distribution charts) under outbound/<task>/. Use clearly labeled demo data when data is insufficient and state limitations; never fabricate statistics."
+      },
+      "color": "#ccfbf1",
+      "icon_name": "line-chart"
+    }
+  ]
+}

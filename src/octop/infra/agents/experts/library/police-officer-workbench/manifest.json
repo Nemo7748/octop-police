@@ -1,19 +1,19 @@
 {
   "id": "police-officer-workbench",
   "catalog_visible": true,
-  "group": "web-workbench",
+  "group": "police-development",
   "order": 1,
   "label": {
     "zh": "民警工作台",
     "en": "Officer Workbench"
   },
   "description": {
-    "zh": "根据待办、日程、业务入口和布局要求，生成自包含的工作台 HTML 与源码；示例数据明确标记为演示或用户输入。",
-    "en": "Build a self-contained workbench HTML from your todos, schedules and layout; demo data clearly labeled."
+    "zh": "一站式集成日常警务应用，聚合任务提醒、待办事项与快捷工具，打造高效办公桌面。",
+    "en": "One-stop hub for daily policing: task reminders, todos and quick tools on an efficient desktop."
   },
   "welcome_message": {
-    "zh": "说说你要的工作台布局与模块，我来生成页面",
-    "en": "Tell me your workbench layout — I'll generate the page"
+    "zh": "说说你要的工作台布局与模块，我来生成办公桌面",
+    "en": "Tell me the layout and modules you need — I'll build your work desktop"
   },
   "icon_name": "layout-dashboard",
   "color": "#1d4ed8",
@@ -27,31 +27,15 @@
         "en": "Build workbench"
       },
       "description": {
-        "zh": "输入：需要的模块（待办/日程/入口）、布局偏好。预期产物：outbound/<task>/ 下的 workbench.html（自包含工作台页面）",
-        "en": "Input: modules (todos/schedule/entries) and layout. Output: self-contained workbench.html under outbound/<task>/"
+        "zh": "输入：需要的模块（待办/日程/快捷工具）、布局偏好。预期产物：outbound/<task>/ 下的 workbench.html（自包含工作台页面）",
+        "en": "Input: modules (todos/schedule/quick tools) and layout. Output: self-contained workbench.html under outbound/<task>/"
       },
       "prompt": {
-        "zh": "请生成民警工作台页面。\n\n需要的模块（待办、日程、业务入口等）：\n\n布局偏好（栏数、主题色）：\n\n预期产物：在 outbound/<task>/ 下生成自包含 workbench.html。页面中的任务与数据使用我提供的内容，其余用明确标注的演示数据。",
-        "en": "Please build an officer workbench page.\n\nModules (todos, schedule, entries):\n\nLayout (columns, theme):\n\nExpected output: self-contained workbench.html under outbound/<task>/. Use my data where given; label the rest as demo data."
+        "zh": "请生成民警工作台页面。\n\n需要的模块（任务提醒、待办事项、快捷工具入口等）：\n\n布局偏好（栏数、主题色）：\n\n预期产物：在 outbound/<task>/ 下生成自包含 workbench.html。页面中的任务与数据使用我提供的内容，其余用明确标注的演示数据。",
+        "en": "Please build an officer workbench page.\n\nModules (task reminders, todos, quick tools):\n\nLayout (columns, theme):\n\nExpected output: self-contained workbench.html under outbound/<task>/. Use my data where given; label the rest as demo data."
       },
       "color": "#dbeafe",
       "icon_name": "layout-dashboard"
-    },
-    {
-      "title": {
-        "zh": "调整工作台布局",
-        "en": "Adjust layout"
-      },
-      "description": {
-        "zh": "描述当前工作台的问题（拥挤/缺模块/不顺手），生成调整后的版本",
-        "en": "Describe issues (crowded/missing modules); get an adjusted version"
-      },
-      "prompt": {
-        "zh": "当前工作台页面存在以下问题：\n\n请调整布局与模块组织，生成新版本 workbench.html（写入 outbound/<task>/）。",
-        "en": "Current workbench issues:\n\nPlease adjust layout and modules, and write a new workbench.html into outbound/<task>/."
-      },
-      "color": "#eff6ff",
-      "icon_name": "layout-template"
     }
   ]
 }

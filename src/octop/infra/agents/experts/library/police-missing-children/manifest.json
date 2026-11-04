@@ -1,0 +1,41 @@
+{
+  "id": "police-missing-children",
+  "catalog_visible": true,
+  "group": "police-development",
+  "order": 6,
+  "label": {
+    "zh": "失踪儿童线索协查助手",
+    "en": "Missing Children Lead Assistant"
+  },
+  "description": {
+    "zh": "汇聚多方线索数据，智能比对失踪儿童特征与轨迹，生成协查通报，助力跨区域协同。",
+    "en": "Aggregate multi-source leads, match missing-child features and trajectories, issue coordination bulletins across regions."
+  },
+  "welcome_message": {
+    "zh": "提供失踪儿童特征与已有线索，我来比对并起草协查通报",
+    "en": "Provide child features and leads — I'll compare them and draft a coordination bulletin"
+  },
+  "icon_name": "search-check",
+  "color": "#4f46e5",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成协查通报",
+        "en": "Draft coordination bulletin"
+      },
+      "description": {
+        "zh": "输入：失踪儿童特征、失踪时间地点、多方线索。预期产物：outbound/<task>/ 下的 bulletin.md（协查通报）与 leads.md（线索比对表）",
+        "en": "Input: child features, time/place missing, multi-source leads. Output: bulletin.md (bulletin) and leads.md (lead comparison) under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请根据以下信息生成失踪儿童协查通报。\n\n儿童特征（年龄、身高、衣着、显著特征）：\n\n失踪时间与地点：\n\n已有线索（目击者、监控、跨区域信息）：\n\n预期产物：在 outbound/<task>/ 下生成 bulletin.md（规范协查通报，含特征描述、轨迹时间线与协查请求）和 leads.md（线索来源-特征-可信度比对表）。未核实的线索单独标注\"待核实\"，示例信息标注为演示数据。",
+        "en": "Please draft a missing-child coordination bulletin.\n\nChild features (age, height, clothing, distinguishing marks):\n\nTime and place missing:\n\nLeads (witnesses, CCTV, cross-region info):\n\nExpected output: bulletin.md (formal bulletin with features, trajectory timeline and coordination request) and leads.md (source-feature-credibility comparison) under outbound/<task>/. Mark unverified leads \"to verify\"; label sample info as demo data."
+      },
+      "color": "#e0e7ff",
+      "icon_name": "search-check"
+    }
+  ]
+}

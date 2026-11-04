@@ -42,7 +42,8 @@ describe("PoliceSkillRail", () => {
       "newTask",
       "assistants",
       "projects",
-      "expertsSkillsConnectors",
+      "experts",
+      "skills",
       "cronJobs",
       "library",
       "more",
@@ -51,6 +52,36 @@ describe("PoliceSkillRail", () => {
         screen.getByText(`policeWorkbench.nav.${key}`),
       ).toBeInTheDocument();
     }
+  });
+
+  it("专家与技能入口直达对应页面", () => {
+    renderRail("/chat/agent-1/thread-9");
+    fireEvent.click(screen.getByText("policeWorkbench.nav.experts"));
+    expect(screen.getByTestId("location-probe").textContent).toBe("/experts");
+    fireEvent.click(screen.getByText("policeWorkbench.nav.skills"));
+    expect(screen.getByTestId("location-probe").textContent).toBe("/skills");
+  });
+
+  it("连接器收纳在更多菜单并直达", async () => {
+    renderRail();
+    fireEvent.click(screen.getByText("policeWorkbench.nav.more"));
+    const CONNECTORS_TEXT = /连接器|Connectors|nav\.connectors/;
+    await waitFor(() =>
+      expect(
+        document.querySelector(".ant-dropdown")?.textContent ?? "",
+      ).toMatch(CONNECTORS_TEXT),
+    );
+    const items = Array.from(
+      document.querySelectorAll(".ant-dropdown-menu-item"),
+    );
+    const connectorsItem = items.find(
+      (item) => item.textContent?.match(CONNECTORS_TEXT),
+    );
+    expect(connectorsItem).toBeDefined();
+    fireEvent.click(connectorsItem as HTMLElement);
+    expect(screen.getByTestId("location-probe").textContent).toBe(
+      "/connectors",
+    );
   });
 
   it("新建任务回到当前智能体工作台", () => {

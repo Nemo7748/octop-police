@@ -11,6 +11,7 @@ import {
   GraduationCap,
   MoreHorizontal,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import { useUserRole } from "../../../hooks/useUserRole";
 import { usePoliceNavigation } from "../../../hooks/usePoliceNavigation";
@@ -54,15 +55,8 @@ export default function PoliceSkillRail() {
       if (!capabilityId) return;
       navigation.navigate({ sourceEntry, capabilityId });
     };
-    const resourceMenu: MenuProps = {
-      items: [
-        { key: "experts", label: t("nav.experts", "智能体") },
-        { key: "skills", label: t("nav.skills", "技能") },
-        { key: "connectors", label: t("nav.connectors", "连接器") },
-      ],
-      onClick: ({ key }) => openMenuCapability("skill-rail.resources", key),
-    };
     const moreItems: NonNullable<MenuProps["items"]> = [
+      { key: "connectors", label: t("nav.connectors", "连接器") },
       { key: "channels", label: t("nav.channels", "渠道") },
       { key: "subagents", label: t("nav.subagents", "子智能体") },
       { key: "memory", label: t("nav.memory", "记忆") },
@@ -112,14 +106,26 @@ export default function PoliceSkillRail() {
           }),
       },
       {
-        key: "resources",
-        label: t("policeWorkbench.nav.expertsSkillsConnectors"),
+        key: "experts",
+        label: t("policeWorkbench.nav.experts"),
         icon: <GraduationCap size={20} strokeWidth={1.8} />,
-        current:
-          selectedKey === "experts" ||
-          selectedKey === "skills" ||
-          selectedKey === "connectors",
-        menu: resourceMenu,
+        current: selectedKey === "experts",
+        onClick: () =>
+          navigation.navigate({
+            sourceEntry: "skill-rail.experts",
+            capabilityId: "experts",
+          }),
+      },
+      {
+        key: "skills",
+        label: t("policeWorkbench.nav.skills"),
+        icon: <Sparkles size={20} strokeWidth={1.8} />,
+        current: selectedKey === "skills",
+        onClick: () =>
+          navigation.navigate({
+            sourceEntry: "skill-rail.skills",
+            capabilityId: "skills",
+          }),
       },
       {
         key: "cron",
@@ -148,6 +154,7 @@ export default function PoliceSkillRail() {
         label: t("policeWorkbench.nav.more"),
         icon: <MoreHorizontal size={20} strokeWidth={1.8} />,
         current:
+          selectedKey === "connectors" ||
           selectedKey === "channels" ||
           selectedKey === "subagents" ||
           selectedKey === "memory" ||

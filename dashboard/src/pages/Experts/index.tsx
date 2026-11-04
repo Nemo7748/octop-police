@@ -54,16 +54,23 @@ async function fetchExpertLibrary(): Promise<ExpertSummary[]> {
   return request<ExpertSummary[]>("/experts");
 }
 
+interface ExpertGroup {
+  group: string;
+  experts: ExpertSummary[];
+}
+
 function projectLibraryCatalog(rows: unknown[]): {
   experts: ExpertSummary[];
+  groups: ExpertGroup[];
   unsupported: boolean;
 } {
   const { valid, rawCount } = collectTemplates(rows);
   if (rawCount > 0 && valid.length === 0) {
-    return { experts: [], unsupported: true };
+    return { experts: [], groups: [], unsupported: true };
   }
-  const experts = buildAgentGroups(valid).flatMap((bucket) =>
-    bucket.agents.map(
+  const groups: ExpertGroup[] = buildAgentGroups(valid).map((bucket) => ({
+    group: bucket.group,
+    experts: bucket.agents.map(
       (agent): ExpertSummary => ({
         id: agent.expertId,
         label: agent.label,
@@ -72,8 +79,12 @@ function projectLibraryCatalog(rows: unknown[]): {
         color: agent.color,
       }),
     ),
-  );
-  return { experts, unsupported: false };
+  }));
+  return {
+    experts: groups.flatMap((bucket) => bucket.experts),
+    groups,
+    unsupported: false,
+  };
 }
 
 async function fetchInstalledExpertIds(): Promise<Set<string>> {
@@ -106,6 +117,7 @@ export default function ExpertsPage() {
       const projected = projectLibraryCatalog(expertRows);
       setLocalAgents(agentList);
       setExperts(projected.experts);
+      setExpertGroups(projected.groups);
       setCatalogUnsupported(projected.unsupported);
       setAgentExpertIds(installedIds);
       await refreshAgents({ silent: true, force: true });
@@ -126,6 +138,7 @@ export default function ExpertsPage() {
 
   // ── Built-in expert library ────────────────────────────────────
   const [experts, setExperts] = useState<ExpertSummary[]>([]);
+  const [expertGroups, setExpertGroups] = useState<ExpertGroup[]>([]);
   const [expertLoading, setExpertLoading] = useState(false);
   const [catalogUnsupported, setCatalogUnsupported] = useState(false);
 
@@ -137,6 +150,7 @@ export default function ExpertsPage() {
         if (cancelled) return;
         const projected = projectLibraryCatalog(rows);
         setExperts(projected.experts);
+        setExpertGroups(projected.groups);
         setCatalogUnsupported(projected.unsupported);
       })
       .catch((err: unknown) => {
@@ -410,20 +424,36 @@ export default function ExpertsPage() {
           </span>
           <div className={styles.gridToolbarRight}>{refreshButton}</div>
         </div>
-        <div className={styles.cardGrid}>
-          {experts.map((expert) => (
-            <ExpertCard
-              key={expert.id}
-              expert={expert}
-              lang={lang}
-              isInstalled={agentExpertIds.has(expert.id)}
-              onCreate={setCreateExpert}
-            />
-          ))}
-        </div>
+        {expertGroups.map((bucket) => (
+          <section key={bucket.group} className={styles.libraryGroup}>
+            <h2 className={styles.libraryGroupTitle}>
+              {t(`policeWorkbench.home.groups.${bucket.group}`)}
+            </h2>
+            <div className={styles.cardGrid}>
+              {bucket.experts.map((expert) => (
+                <ExpertCard
+                  key={expert.id}
+                  expert={expert}
+                  lang={lang}
+                  isInstalled={agentExpertIds.has(expert.id)}
+                  onCreate={setCreateExpert}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
       </>
     );
-  }, [catalogUnsupported, experts, expertLoading, lang, agentExpertIds, refreshButton, t]);
+  }, [
+    catalogUnsupported,
+    experts,
+    expertGroups,
+    expertLoading,
+    lang,
+    agentExpertIds,
+    refreshButton,
+    t,
+  ]);
 
   const marketContent = useMemo(
     () => (

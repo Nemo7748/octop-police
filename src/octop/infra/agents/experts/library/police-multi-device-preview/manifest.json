@@ -1,6 +1,6 @@
 {
   "id": "police-multi-device-preview",
-  "catalog_visible": true,
+  "catalog_visible": false,
   "group": "web-workbench",
   "order": 4,
   "label": {

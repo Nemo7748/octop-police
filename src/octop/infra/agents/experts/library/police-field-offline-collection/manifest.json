@@ -1,6 +1,6 @@
 {
   "id": "police-field-offline-collection",
-  "catalog_visible": true,
+  "catalog_visible": false,
   "group": "police-development",
   "order": 2,
   "label": {

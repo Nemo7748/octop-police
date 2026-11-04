@@ -1,4 +1,4 @@
-"""Tests for the 11 bundled police agent templates and catalog visibility."""
+"""Tests for the 12 bundled police agent templates and catalog visibility."""
 
 from __future__ import annotations
 
@@ -13,19 +13,20 @@ from octop.infra.agents.experts.catalog import (
 
 POLICE_TEMPLATES: dict[str, tuple[str, ...]] = {
     "police-development": (
-        "police-data-dashboard",
-        "police-field-offline-collection",
-        "police-video-geo-location",
-        "police-visual-modeling",
+        "police-officer-workbench",
+        "police-nl-assistant",
+        "police-report-materials",
         "police-risk-warning",
+        "police-legal-matching",
+        "police-missing-children",
+        "police-nl-visualization",
     ),
     "web-workbench": (
-        "police-officer-workbench",
-        "police-nl-visualization",
-        "police-drag-visual-editor",
-        "police-multi-device-preview",
-        "police-template-market",
-        "police-release-review",
+        "police-doc-assistant",
+        "police-dossier-review",
+        "police-incident-analysis",
+        "police-data-dashboard",
+        "police-briefing-generator",
     ),
 }
 
@@ -42,6 +43,13 @@ LEGACY_SLUGS = (
     "wechat-ops",
     "cvm-ai-doctor",
     "cvm-cluster-doctor",
+    "police-field-offline-collection",
+    "police-video-geo-location",
+    "police-visual-modeling",
+    "police-drag-visual-editor",
+    "police-multi-device-preview",
+    "police-template-market",
+    "police-release-review",
 )
 
 
@@ -57,7 +65,7 @@ def _bilingual(data: dict, field: str, slug: str) -> None:
 
 
 def test_police_templates_exist_with_expected_structure() -> None:
-    assert len(EXPECTED_SLUGS) == 11
+    assert len(EXPECTED_SLUGS) == 12
     for slug in sorted(EXPECTED_SLUGS):
         data = _manifest(slug)
         assert data["id"] == slug
@@ -80,8 +88,8 @@ def test_police_templates_exist_with_expected_structure() -> None:
 
 
 def test_police_template_group_counts_and_unique_orders() -> None:
-    assert len(POLICE_TEMPLATES["police-development"]) == 5
-    assert len(POLICE_TEMPLATES["web-workbench"]) == 6
+    assert len(POLICE_TEMPLATES["police-development"]) == 7
+    assert len(POLICE_TEMPLATES["web-workbench"]) == 5
     for group, slugs in POLICE_TEMPLATES.items():
         assert group in CATALOG_GROUPS
         group_orders: list[int] = []
@@ -114,12 +122,12 @@ def test_police_templates_visible_and_sorted_in_catalog() -> None:
     catalog.refresh()
     summaries = catalog.list_summaries()
     ids = [s.id for s in summaries]
-    assert len(ids) == 11, f"catalog should list exactly 11, got {ids}"
+    assert len(ids) == 12, f"catalog should list exactly 12, got {ids}"
     assert set(ids) == EXPECTED_SLUGS
     dev_ids = [s.id for s in summaries if s.group == "police-development"]
     web_ids = [s.id for s in summaries if s.group == "web-workbench"]
-    assert len(dev_ids) == 5
-    assert len(web_ids) == 6
+    assert len(dev_ids) == 7
+    assert len(web_ids) == 5
     assert ids[: len(dev_ids)] == dev_ids, "police-development group must come first"
     assert ids[len(dev_ids) :] == web_ids
     dev_orders = [s.order for s in summaries if s.group == "police-development"]

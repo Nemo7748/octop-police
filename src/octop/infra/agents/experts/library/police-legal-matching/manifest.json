@@ -1,0 +1,41 @@
+{
+  "id": "police-legal-matching",
+  "catalog_visible": true,
+  "group": "police-development",
+  "order": 5,
+  "label": {
+    "zh": "案件法律匹配与调用",
+    "en": "Case Legal Matching"
+  },
+  "description": {
+    "zh": "根据案情要素与证据情况，精准匹配适用法律法规、司法解释与指导案例，辅助案件定性。",
+    "en": "Match applicable laws, judicial interpretations and guiding cases from case facts and evidence to aid characterization."
+  },
+  "welcome_message": {
+    "zh": "描述案情要素与证据情况，我来匹配适用法条与参考案例",
+    "en": "Describe case facts and evidence — I'll match applicable laws and reference cases"
+  },
+  "icon_name": "scale",
+  "color": "#b45309",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "匹配适用法条",
+        "en": "Match applicable laws"
+      },
+      "description": {
+        "zh": "输入：案情要素、证据清单与争议焦点。预期产物：outbound/<task>/ 下的 legal-matching.md（法条匹配与定性分析）",
+        "en": "Input: case facts, evidence list and disputed issues. Output: legal-matching.md (law matching and characterization) under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请根据以下案情匹配适用法律法规。\n\n案情要素：\n\n证据情况：\n\n争议焦点：\n\n预期产物：在 outbound/<task>/ 下生成 legal-matching.md，包含涉嫌罪名/案由分析、适用法条与司法解释条目、可参考的指导案例类型，以及证据缺口提示。结论标注\"仅供办案参考，定性以法制审核为准\"；不编造具体案号，引用示例标注为演示数据。",
+        "en": "Please match applicable laws for the following case.\n\nCase facts:\n\nEvidence:\n\nDisputed issues:\n\nExpected output: legal-matching.md under outbound/<task>/ with charge/cause analysis, applicable statutes and judicial interpretations, types of guiding cases, and evidence gaps. Mark \"reference only; characterization subject to legal review\"; do not invent case numbers, label examples as demo data."
+      },
+      "color": "#fef3c7",
+      "icon_name": "scale"
+    }
+  ]
+}

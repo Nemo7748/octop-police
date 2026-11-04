@@ -1,0 +1,41 @@
+{
+  "id": "police-nl-assistant",
+  "catalog_visible": true,
+  "group": "police-development",
+  "order": 2,
+  "label": {
+    "zh": "AI自然语言生成助手",
+    "en": "NL Generation Assistant"
+  },
+  "description": {
+    "zh": "基于警务大模型，支持自然语言交互问答，快速生成文书材料、提供办案思路与知识检索。",
+    "en": "Police LLM assistant for NL Q&A: fast document drafting, case-handling ideas and knowledge retrieval."
+  },
+  "welcome_message": {
+    "zh": "直接提问或描述要写的文书材料，我来回答与起草",
+    "en": "Ask a question or describe the document you need — I'll answer and draft"
+  },
+  "icon_name": "message-square-text",
+  "color": "#0ea5e9",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "起草警务文书",
+        "en": "Draft police document"
+      },
+      "description": {
+        "zh": "输入：文书类型、案情要素与语气要求。预期产物：outbound/<task>/ 下的 document.md（文书草稿）与 notes.md（办案思路/知识要点）",
+        "en": "Input: document type, case facts and tone. Output: document.md (draft) and notes.md (case ideas/knowledge) under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请帮我起草警务文书材料。\n\n文书类型（如情况说明、询问提纲、工作汇报）：\n\n案情要素与背景：\n\n预期产物：在 outbound/<task>/ 下生成 document.md（规范文书草稿）和 notes.md（办案思路与相关知识检索要点）。涉及真实案件的信息用我提供的内容，其余示例明确标注为演示数据。",
+        "en": "Please draft a police document.\n\nDocument type (situation report, interview outline, work summary):\n\nCase facts and background:\n\nExpected output: document.md (formatted draft) and notes.md (case-handling ideas and knowledge points) under outbound/<task>/. Use my case facts; label any other examples as demo data."
+      },
+      "color": "#e0f2fe",
+      "icon_name": "message-square-text"
+    }
+  ]
+}

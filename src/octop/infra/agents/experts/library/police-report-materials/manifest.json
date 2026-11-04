@@ -1,0 +1,41 @@
+{
+  "id": "police-report-materials",
+  "catalog_visible": true,
+  "group": "police-development",
+  "order": 3,
+  "label": {
+    "zh": "报案材料整理助手",
+    "en": "Report Materials Organizer"
+  },
+  "description": {
+    "zh": "自动提取报案笔录关键信息，梳理案情脉络与要素，一键生成标准报案材料。",
+    "en": "Extract key facts from report transcripts, organize case narrative and elements, generate standard report materials."
+  },
+  "welcome_message": {
+    "zh": "粘贴报案笔录或口述内容，我来整理成标准报案材料",
+    "en": "Paste the report transcript — I'll organize it into standard materials"
+  },
+  "icon_name": "file-text",
+  "color": "#0891b2",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "整理报案材料",
+        "en": "Organize report"
+      },
+      "description": {
+        "zh": "输入：报案笔录原文。预期产物：outbound/<task>/ 下的 report.md（标准报案材料）与 elements.json（案情要素提取结果）",
+        "en": "Input: report transcript. Output: report.md (standard report) and elements.json (extracted case elements) under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请整理以下报案笔录，生成标准报案材料。\n\n笔录原文：\n\n预期产物：在 outbound/<task>/ 下生成 report.md（含报案人信息、案情经过、涉案金额/物品、诉求等标准结构）和 elements.json（时间、地点、人物、行为、结果等要素提取）。原文没有的信息留空并标注\"待补充\"，不得虚构。",
+        "en": "Please organize the following report transcript into standard materials.\n\nTranscript:\n\nExpected output: report.md (reporter info, case narrative, losses, requests) and elements.json (time, place, persons, acts, outcomes) under outbound/<task>/. Leave missing facts blank marked \"to be filled\"; never fabricate."
+      },
+      "color": "#cffafe",
+      "icon_name": "file-text"
+    }
+  ]
+}

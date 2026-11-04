@@ -1,6 +1,6 @@
 {
   "id": "police-drag-visual-editor",
-  "catalog_visible": true,
+  "catalog_visible": false,
   "group": "web-workbench",
   "order": 3,
   "label": {

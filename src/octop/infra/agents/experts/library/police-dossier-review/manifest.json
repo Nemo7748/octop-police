@@ -1,0 +1,41 @@
+{
+  "id": "police-dossier-review",
+  "catalog_visible": true,
+  "group": "web-workbench",
+  "order": 2,
+  "label": {
+    "zh": "卷宗智能审查",
+    "en": "Dossier Smart Review"
+  },
+  "description": {
+    "zh": "AI自动解析卷宗要素，智能比对证据链并预警逻辑漏洞，辅助办案审查。",
+    "en": "AI parses dossier elements, cross-checks the evidence chain and flags logic gaps to aid case review."
+  },
+  "welcome_message": {
+    "zh": "上传卷宗材料，我来解析要素、比对证据链并提示漏洞",
+    "en": "Upload dossier materials — I'll parse elements, check the evidence chain and flag gaps"
+  },
+  "icon_name": "book-open-check",
+  "color": "#b45309",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "审查卷宗证据链",
+        "en": "Review evidence chain"
+      },
+      "description": {
+        "zh": "输入：卷宗文书与证据材料（可用内置 pdf/docx 技能解析）。预期产物：outbound/<task>/ 下的 review.md（审查意见）与 evidence-chain.md（证据链比对表）",
+        "en": "Input: dossier documents and evidence (parsed via built-in pdf/docx skills). Output: review.md and evidence-chain.md under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请审查以下卷宗材料。\n\n卷宗文书与证据清单（粘贴内容或说明文件名）：\n\n预期产物：在 outbound/<task>/ 下生成 review.md（卷宗要素解析、证据链完整性比对、逻辑漏洞与补证建议）和 evidence-chain.md（证据-待证事实-印证关系对照表）。审查结论标注\"仅供办案审查参考\"，示例证据标注为演示数据。",
+        "en": "Please review the following dossier.\n\nDossier documents and evidence list (paste content or file names):\n\nExpected output: review.md (element parsing, evidence-chain completeness, logic gaps and supplementation advice) and evidence-chain.md (evidence-fact-corroboration table) under outbound/<task>/. Mark conclusions \"for case review reference only\"; label sample evidence as demo data."
+      },
+      "color": "#fef3c7",
+      "icon_name": "book-open-check"
+    }
+  ]
+}

@@ -60,10 +60,11 @@ const LIBRARY_ROWS = [
   template("p2", "police-development", 2),
   template("w1", "web-workbench", 1),
   template("p5", "police-development", 5),
-  template("w6", "web-workbench", 6),
+  template("p7", "police-development", 7),
   template("p1", "police-development", 1),
   template("w3", "web-workbench", 3),
   template("p4", "police-development", 4),
+  template("p6", "police-development", 6),
   template("w2", "web-workbench", 2),
   template("p3", "police-development", 3),
   template("w4", "web-workbench", 4),
@@ -75,12 +76,13 @@ const EXPECTED_ORDER = [
   "p3",
   "p4",
   "p5",
+  "p6",
+  "p7",
   "w1",
   "w2",
   "w3",
   "w4",
   "w5",
-  "w6",
 ];
 
 describe("ExpertsPage 内置智能体页签", () => {
@@ -99,7 +101,7 @@ describe("ExpertsPage 内置智能体页签", () => {
     } as unknown as ReturnType<typeof useAgent>);
   });
 
-  it("页签文案齐备，内置页与首页同源恰 11 项且按组序展示", async () => {
+  it("页签文案齐备，内置页与首页同源恰 12 项且按组序展示", async () => {
     render(<ExpertsPage />);
     expect(screen.getByText("experts.myExperts")).toBeInTheDocument();
     expect(screen.getByText("experts.expertLibrary")).toBeInTheDocument();
@@ -112,7 +114,15 @@ describe("ExpertsPage 内置智能体页签", () => {
       document.querySelectorAll(`.${styles.agentCardName}`),
     ).map((el) => el.textContent);
     expect(names).toEqual(EXPECTED_ORDER);
-    expect(tMock).toHaveBeenCalledWith("experts.totalLibrary", { count: 11 });
+    expect(tMock).toHaveBeenCalledWith("experts.totalLibrary", { count: 12 });
+
+    const titles = Array.from(
+      document.querySelectorAll(`.${styles.libraryGroupTitle}`),
+    ).map((el) => el.textContent);
+    expect(titles).toEqual([
+      "policeWorkbench.home.groups.police-development",
+      "policeWorkbench.home.groups.web-workbench",
+    ]);
   });
 
   it("旧后端目录（无分组元数据）显示版本不支持提示", async () => {
@@ -131,9 +141,7 @@ describe("ExpertsPage 内置智能体页签", () => {
     render(<ExpertsPage />);
     fireEvent.click(screen.getByText("experts.expertLibrary"));
     await screen.findByText("policeWorkbench.home.catalogUnsupported");
-    expect(
-      document.querySelector(`.${styles.expertTemplateCard}`),
-    ).toBeNull();
+    expect(document.querySelector(`.${styles.expertTemplateCard}`)).toBeNull();
   });
 
   it("点击模板卡打开创建智能体抽屉", async () => {

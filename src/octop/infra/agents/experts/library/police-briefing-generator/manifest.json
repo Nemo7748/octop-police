@@ -1,0 +1,41 @@
+{
+  "id": "police-briefing-generator",
+  "catalog_visible": true,
+  "group": "web-workbench",
+  "order": 5,
+  "label": {
+    "zh": "智能汇报生成",
+    "en": "Smart Briefing Generator"
+  },
+  "description": {
+    "zh": "输入主题大纲，AI自动排版并生成专业警务汇报演示文稿。",
+    "en": "Enter a topic outline and AI auto-formats a professional police briefing deck."
+  },
+  "welcome_message": {
+    "zh": "给我汇报主题与大纲，我用内置 pptx 技能生成演示文稿",
+    "en": "Give me the topic and outline — I'll generate the deck with the built-in pptx skill"
+  },
+  "icon_name": "presentation",
+  "color": "#7c3aed",
+  "prompt_files": [
+    "SOUL.md"
+  ],
+  "quick_prompts": [
+    {
+      "title": {
+        "zh": "生成汇报 PPT",
+        "en": "Generate briefing PPT"
+      },
+      "description": {
+        "zh": "输入：汇报主题、大纲与受众。预期产物：outbound/<task>/ 下的 briefing.pptx（内置 pptx 技能生成）与 outline.md（逐页内容）",
+        "en": "Input: topic, outline and audience. Output: briefing.pptx (via built-in pptx skill) and outline.md under outbound/<task>/"
+      },
+      "prompt": {
+        "zh": "请生成专业警务汇报演示文稿。\n\n汇报主题：\n\n大纲（各章节要点）：\n\n受众与时长：\n\n预期产物：调用内置 pptx 技能，在 outbound/<task>/ 下生成 briefing.pptx，并输出 outline.md（逐页标题与要点）。版式规范统一、重点突出，示例数据明确标注为演示数据。",
+        "en": "Please generate a professional police briefing deck.\n\nTopic:\n\nOutline (section key points):\n\nAudience and duration:\n\nExpected output: use the built-in pptx skill to produce briefing.pptx under outbound/<task>/ plus outline.md (per-slide titles and bullets). Consistent layout with clear highlights; label sample data as demo data."
+      },
+      "color": "#ede9fe",
+      "icon_name": "presentation"
+    }
+  ]
+}

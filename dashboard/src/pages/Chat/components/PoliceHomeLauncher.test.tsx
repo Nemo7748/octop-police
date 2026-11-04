@@ -16,19 +16,20 @@ import {
 import PoliceHomeLauncher from "./PoliceHomeLauncher";
 
 const DEV_SLUGS = [
-  "police-data-dashboard",
-  "police-field-offline-collection",
-  "police-video-geo-location",
-  "police-visual-modeling",
+  "police-officer-workbench",
+  "police-nl-assistant",
+  "police-report-materials",
   "police-risk-warning",
+  "police-legal-matching",
+  "police-missing-children",
+  "police-nl-visualization",
 ];
 const WEB_SLUGS = [
-  "police-officer-workbench",
-  "police-nl-visualization",
-  "police-drag-visual-editor",
-  "police-multi-device-preview",
-  "police-template-market",
-  "police-release-review",
+  "police-doc-assistant",
+  "police-dossier-review",
+  "police-incident-analysis",
+  "police-data-dashboard",
+  "police-briefing-generator",
 ];
 const SKILL_SLUGS = [
   "police-ppt-generation",
@@ -65,10 +66,7 @@ function agentSummary(
   };
 }
 
-function skillSummary(
-  slug: string,
-  order: number,
-): RecommendedSkill {
+function skillSummary(slug: string, order: number): RecommendedSkill {
   return {
     slug,
     name: `技能 ${slug}`,
@@ -173,9 +171,9 @@ describe("PoliceHomeLauncher", () => {
     const agentIds = Array.from(
       container.querySelectorAll<HTMLElement>("[data-agent-id]"),
     ).map((el) => el.dataset.agentId);
-    expect(agentIds).toHaveLength(11);
-    expect(agentIds?.slice(0, 5)).toEqual(DEV_SLUGS);
-    expect(agentIds?.slice(5)).toEqual(WEB_SLUGS);
+    expect(agentIds).toHaveLength(12);
+    expect(agentIds?.slice(0, 7)).toEqual(DEV_SLUGS);
+    expect(agentIds?.slice(7)).toEqual(WEB_SLUGS);
 
     const skillSlugs = Array.from(
       container.querySelectorAll<HTMLElement>("[data-skill-slug]"),
@@ -197,12 +195,8 @@ describe("PoliceHomeLauncher", () => {
   });
 
   it("error 显示可重试错误并触发 onRetry", () => {
-    const { onRetry } = renderLauncher(
-      errorState("templates", true),
-    );
-    expect(
-      screen.getByText("policeWorkbench.home.loadFailed"),
-    ).toBeTruthy();
+    const { onRetry } = renderLauncher(errorState("templates", true));
+    expect(screen.getByText("policeWorkbench.home.loadFailed")).toBeTruthy();
     fireEvent.click(screen.getByText("policeWorkbench.home.retry"));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
@@ -228,7 +222,7 @@ describe("PoliceHomeLauncher", () => {
       },
       { templates: "ok", instances: "ok", skills: "error" },
     );
-    expect(container.querySelectorAll("[data-agent-id]")).toHaveLength(11);
+    expect(container.querySelectorAll("[data-agent-id]")).toHaveLength(12);
     expect(
       container.querySelector('[data-testid="home-skills-error"]'),
     ).not.toBeNull();
@@ -254,9 +248,10 @@ describe("PoliceHomeLauncher", () => {
 
   it("技能来源就绪但为空时显示 noSkills", () => {
     const catalog = buildCatalog();
-    renderLauncher(
-      { status: "ready", data: { ...catalog, recommendedSkills: [] } },
-    );
+    renderLauncher({
+      status: "ready",
+      data: { ...catalog, recommendedSkills: [] },
+    });
     expect(screen.getByText("policeWorkbench.home.noSkills")).toBeTruthy();
   });
 
@@ -278,7 +273,9 @@ describe("PoliceHomeLauncher", () => {
       screen.getByText("技能 police-ppt-generation").closest("button")!,
     );
     expect(onLaunchSkill).toHaveBeenCalledTimes(1);
-    expect(onLaunchSkill.mock.calls[0]?.[0]?.slug).toBe("police-ppt-generation");
+    expect(onLaunchSkill.mock.calls[0]?.[0]?.slug).toBe(
+      "police-ppt-generation",
+    );
     expect(onLaunchAgent).not.toHaveBeenCalled();
   });
 
