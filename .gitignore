@@ -11,6 +11,9 @@ Desktop.ini
 # Visual Studio local cache
 .vs/
 
+# IDE / tool local state
+.arts/
+
 # Environment / secrets
 .env
 .env.*
