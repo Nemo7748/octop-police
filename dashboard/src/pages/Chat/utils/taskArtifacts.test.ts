@@ -352,7 +352,7 @@ describe("deriveArtifactChangesFromMessages 产物变更投影", () => {
     expect(deriveArtifactChangesFromMessages(messages, ctx)).toHaveLength(0);
   });
 
-  it("非支持类型 .png 不产生变更", () => {
+  it("图片类型 .png 产生可预览变更", () => {
     const changes = deriveArtifactChangesFromMessages(
       [
         toolMessage({
@@ -367,7 +367,7 @@ describe("deriveArtifactChangesFromMessages 产物变更投影", () => {
       ],
       ctx,
     );
-    expect(changes).toHaveLength(0);
+    expect(changes).toHaveLength(1);
   });
 
   it("file:// 绝对路径被拒绝", () => {

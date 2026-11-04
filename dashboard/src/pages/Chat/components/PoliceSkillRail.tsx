@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useUserRole } from "../../../hooks/useUserRole";
 import { usePoliceNavigation } from "../../../hooks/usePoliceNavigation";
+import { prefetchRoute } from "../../../routes/prefetch";
 import {
   resolvePoliceCapability,
   type PoliceCapabilityId,
@@ -180,6 +181,12 @@ export default function PoliceSkillRail() {
             data-current={entry.current}
             aria-current={entry.current ? "page" : undefined}
             title={entry.label}
+            onMouseEnter={
+              entry.key === "new-task" ? () => prefetchRoute("/chat") : undefined
+            }
+            onFocus={
+              entry.key === "new-task" ? () => prefetchRoute("/chat") : undefined
+            }
             onClick={entry.menu ? undefined : entry.onClick}
           >
             <span className={styles.railIcon} aria-hidden>

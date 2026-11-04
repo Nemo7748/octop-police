@@ -2,18 +2,26 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Select, message, Tooltip, Segmented } from "antd";
 import { Pencil, Save, ArrowDownToLine, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { request, requestBlob } from "../../../api/request";
+import { request } from "../../../api/request";
+import { workspaceApi } from "../../../api/modules/workspace";
 import FileViewer from "../../Agent/Workspace/components/FileViewer";
+import type { FileViewerLoadStatus } from "../../Agent/Workspace/components/previewLoadState";
 import { getDocKind } from "../../Agent/Workspace/utils/docKind";
+import { getMediaKind } from "../../Agent/Workspace/utils/mediaKind";
 import { isProbablyText } from "../../Agent/Workspace/utils/fileKind";
 import {
   getPreviewKind,
   previewNeedsFillLayout,
   defaultPreviewMode,
 } from "../../Agent/Workspace/components/FilePreview";
+import type {
+  PreviewDisplayStatus,
+  PreviewRequestToken,
+  ResourceError,
+} from "../workbenchTypes";
+import { mapApiErrorKind } from "../utils/workbenchContext";
 import styles from "../index.module.less";
 
-/** Keep tool path shape: absolute stays absolute, relative stays relative. */
 function panelFilePath(raw: string): string {
   const trimmed = raw.trim();
   if (trimmed.toLowerCase().startsWith("file://")) {
@@ -24,63 +32,88 @@ function panelFilePath(raw: string): string {
   return trimmed;
 }
 
-interface FilePanelContentProps {
-  agentId: string;
-  /** All workspace files written by the agent in this thread. */
-  filePaths: string[];
-  /** When set, opens on this path instead of the latest written one. */
-  initialPath?: string | null;
-  /** External revision from the preview controller; bumping re-fetches content. */
-  revision?: number;
+interface ContentSnapshot {
+  readonly contextKey: string;
+  readonly path: string;
+  readonly content: string;
 }
 
-/**
- * Shared file viewer/editor body used by the docked ``FilePanel`` (write/edit
- * tool results and preview/download cards). Paths are passed through as the
- * tool reported them — no collapsing absolute → relative.
- */
+interface FilePanelContentProps {
+  readonly agentId: string;
+  readonly filePaths: readonly string[];
+  readonly initialPath?: string | null;
+  readonly revision?: number;
+  readonly contextKey?: string;
+  readonly selectedPath?: string | null;
+  readonly displayStatus?: PreviewDisplayStatus;
+  readonly onSelectPath?: (path: string) => void;
+  readonly onRefresh?: () => void;
+  readonly onReadSuccess?: (token: PreviewRequestToken) => void;
+  readonly onReadFailure?: (
+    token: PreviewRequestToken,
+    error: ResourceError,
+  ) => void;
+  readonly onRenderFailure?: (token: PreviewRequestToken) => void;
+  readonly onUnsupported?: (token: PreviewRequestToken) => void;
+}
+
 export default function FilePanelContent({
   agentId,
   filePaths,
   initialPath,
-  revision,
+  revision = 0,
+  contextKey,
+  selectedPath: controlledPath,
+  onSelectPath,
+  onRefresh,
+  onReadSuccess,
+  onReadFailure,
+  onRenderFailure,
+  onUnsupported,
 }: FilePanelContentProps) {
   const { t } = useTranslation();
   const normalizedPaths = useMemo(
-    () => filePaths.map((p) => panelFilePath(p)),
+    () => filePaths.map((path) => panelFilePath(path)),
     [filePaths],
   );
   const normalizedInitial = initialPath ? panelFilePath(initialPath) : null;
-  const [selectedPath, setSelectedPath] = useState<string>("");
-  const [content, setContent] = useState<string>("");
+  const [internalPath, setInternalPath] = useState("");
+  const [snapshot, setSnapshot] = useState<ContentSnapshot | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [previewMode, setPreviewMode] = useState(true);
   const [fileLoading, setFileLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
+  const [readFailed, setReadFailed] = useState(false);
 
-  // Preview/download cards pass a fresh initialPath; sync selection to it.
   useEffect(() => {
-    if (normalizedInitial) {
-      setSelectedPath(normalizedInitial);
+    if (controlledPath === undefined && normalizedInitial) {
+      setInternalPath(normalizedInitial);
     }
-  }, [normalizedInitial]);
+  }, [controlledPath, normalizedInitial]);
 
   const resolvedPath =
-    selectedPath ||
-    normalizedInitial ||
-    normalizedPaths[normalizedPaths.length - 1] ||
-    "";
+    controlledPath !== undefined
+      ? (controlledPath ?? "")
+      : internalPath ||
+        normalizedInitial ||
+        normalizedPaths[normalizedPaths.length - 1] ||
+        "";
+  const currentContextKey = contextKey ?? agentId;
+  const content =
+    snapshot?.contextKey === currentContextKey && snapshot.path === resolvedPath
+      ? snapshot.content
+      : "";
+  const hasCurrentContent = content !== "";
 
   const docKind = resolvedPath ? getDocKind(resolvedPath) : null;
+  const mediaKind = resolvedPath ? getMediaKind(resolvedPath) : null;
   const previewKind = resolvedPath ? getPreviewKind(resolvedPath) : null;
   const isText = resolvedPath ? isProbablyText(resolvedPath) : false;
-  const showEditButton = isText;
   const showPreviewToggle =
-    isText && previewKind !== null && !editMode && content !== "";
+    isText && previewKind !== null && !editMode && hasCurrentContent;
 
   const apiFilePath = useMemo(() => {
-    // Absolute tool paths → file:// so the API passes them through unchanged.
     if (resolvedPath.startsWith("/") || /^[A-Za-z]:/.test(resolvedPath)) {
       return `file://${resolvedPath}`;
     }
@@ -91,57 +124,82 @@ export default function FilePanelContent({
     if (!resolvedPath || !agentId) return;
     setEditMode(false);
     setPreviewMode(defaultPreviewMode(resolvedPath));
-    setContent("");
-    if (!isText) return;
-    let cancelled = false;
+    setReadFailed(false);
+    const token = { contextKey: currentContextKey, path: resolvedPath, revision };
+    if (!isText) {
+      setFileLoading(false);
+      if (!mediaKind && (!docKind || docKind === "ppt")) onUnsupported?.(token);
+      return;
+    }
+
+    const abortController = new AbortController();
     setFileLoading(true);
-    request<{ content: string }>(
-      `/agents/${agentId}/workspace/file?path=${encodeURIComponent(
-        apiFilePath,
-      )}`,
-    )
-      .then((r) => {
-        if (!cancelled) setContent(r.content);
+    workspaceApi
+      .readAgentFile(agentId, apiFilePath, {
+        signal: abortController.signal,
       })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          message.error(
-            (err instanceof Error ? err.message : String(err)) ||
-              t("workspace.readFailed", "读取失败"),
-          );
+      .then((response) => {
+        if (abortController.signal.aborted) return;
+        setSnapshot({
+          contextKey: currentContextKey,
+          path: resolvedPath,
+          content: response.content,
+        });
+        setReadFailed(false);
+        onReadSuccess?.(token);
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) return;
+        const kind = mapApiErrorKind(error);
+        setReadFailed(true);
+        if (kind === "forbidden" || kind === "unauthorized" || kind === "unavailable") {
+          setSnapshot(null);
         }
+        onReadFailure?.(token, {
+          kind,
+          message: "",
+          retryable: kind === "unknown",
+        });
       })
       .finally(() => {
-        if (!cancelled) setFileLoading(false);
+        if (!abortController.signal.aborted) setFileLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolvedPath, apiFilePath, agentId, isText, refreshToken, revision]);
+
+    return () => abortController.abort();
+  }, [
+    resolvedPath,
+    apiFilePath,
+    agentId,
+    currentContextKey,
+    isText,
+    mediaKind,
+    docKind,
+    refreshToken,
+    revision,
+    onReadSuccess,
+    onReadFailure,
+    onUnsupported,
+    t,
+  ]);
 
   const refresh = useCallback(() => {
     setEditMode(false);
-    setRefreshToken((n) => n + 1);
-  }, []);
+    if (onRefresh) onRefresh();
+    else setRefreshToken((value) => value + 1);
+  }, [onRefresh]);
 
   const save = async () => {
     if (!resolvedPath) return;
     setSaving(true);
     try {
       await request(
-        `/agents/${agentId}/workspace/file?path=${encodeURIComponent(
-          apiFilePath,
-        )}`,
+        `/agents/${agentId}/workspace/file?path=${encodeURIComponent(apiFilePath)}`,
         { method: "PUT", body: JSON.stringify({ content }) },
       );
       message.success(t("workspace.saved", "已保存"));
       setEditMode(false);
-    } catch (err: unknown) {
-      message.error(
-        (err instanceof Error ? err.message : String(err)) ||
-          t("workspace.saveFailed", "保存失败"),
-      );
+    } catch {
+      message.error(t("workspace.saveFailed", "保存失败"));
     } finally {
       setSaving(false);
     }
@@ -150,23 +208,37 @@ export default function FilePanelContent({
   const download = async () => {
     if (!resolvedPath) return;
     try {
-      const blob = await requestBlob(
-        `/agents/${agentId}/workspace/download?path=${encodeURIComponent(
-          apiFilePath,
-        )}`,
-      );
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = resolvedPath.split("/").pop() || "download";
-      a.click();
-      URL.revokeObjectURL(a.href);
-    } catch (err: unknown) {
-      message.error(
-        (err instanceof Error ? err.message : String(err)) ||
-          t("workspace.downloadFailed", "下载失败"),
-      );
+      const blob = await workspaceApi.downloadAgentFile(agentId, apiFilePath);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = resolvedPath.split("/").pop() || "download";
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      message.error(t("workspace.downloadFailed", "下载失败"));
     }
   };
+
+  const handleViewerState = useCallback(
+    (state: FileViewerLoadStatus) => {
+      if (!resolvedPath) return;
+      const token = { contextKey: currentContextKey, path: resolvedPath, revision };
+      if (state.status === "ready") onReadSuccess?.(token);
+      if (state.status === "read-failed") onReadFailure?.(token, state.error);
+      if (state.status === "render-failed") onRenderFailure?.(token);
+      if (state.status === "unsupported") onUnsupported?.(token);
+    },
+    [
+      currentContextKey,
+      resolvedPath,
+      revision,
+      onReadSuccess,
+      onReadFailure,
+      onRenderFailure,
+      onUnsupported,
+    ],
+  );
 
   const bodyFill =
     editMode ||
@@ -180,13 +252,16 @@ export default function FilePanelContent({
           {normalizedPaths.length > 1 && (
             <Select
               size="small"
-              value={resolvedPath}
-              onChange={setSelectedPath}
+              value={resolvedPath || undefined}
+              onChange={(path) => {
+                if (onSelectPath) onSelectPath(path);
+                else setInternalPath(path);
+              }}
               className={styles.fileModalSelect}
               aria-label={t("chat.fileSwitch", "切换文件")}
-              options={normalizedPaths.map((p) => ({
-                value: p,
-                label: p.split("/").filter(Boolean).pop() || p,
+              options={normalizedPaths.map((path) => ({
+                value: path,
+                label: path.split("/").filter(Boolean).pop() || path,
               }))}
             />
           )}
@@ -200,7 +275,7 @@ export default function FilePanelContent({
                 { label: t("common.preview"), value: "preview" },
                 { label: t("workspace.source", "源码"), value: "source" },
               ]}
-              onChange={(v) => setPreviewMode(v === "preview")}
+              onChange={(value) => setPreviewMode(value === "preview")}
             />
           )}
           <Tooltip title={t("common.refresh")}>
@@ -219,12 +294,13 @@ export default function FilePanelContent({
               type="button"
               className={styles.fileModalIconBtn}
               onClick={() => void download()}
+              disabled={!resolvedPath}
               aria-label={t("common.download")}
             >
               <ArrowDownToLine size={16} strokeWidth={2} />
             </button>
           </Tooltip>
-          {showEditButton &&
+          {isText &&
             (editMode ? (
               <Button
                 size="small"
@@ -246,6 +322,13 @@ export default function FilePanelContent({
             ))}
         </div>
       </div>
+      {readFailed && (
+        <div role="alert" className={styles.filePanelReadError}>
+          {hasCurrentContent
+            ? t("policeWorkbench.preview.stale", "内容可能不是最新版本")
+            : t("policeWorkbench.preview.failed", "文档加载失败")}
+        </div>
+      )}
       <div
         className={`${styles.fileModalBody} ${
           bodyFill ? styles.fileModalBodyFill : ""
@@ -257,10 +340,17 @@ export default function FilePanelContent({
             path={resolvedPath}
             editMode={editMode}
             value={content}
-            onChange={setContent}
+            onChange={(value) =>
+              setSnapshot({
+                contextKey: currentContextKey,
+                path: resolvedPath,
+                content: value,
+              })
+            }
             fileLoading={fileLoading}
             previewMode={previewMode}
             refreshToken={refreshToken}
+            onLoadStateChange={handleViewerState}
           />
         )}
       </div>

@@ -10,6 +10,7 @@ import {
   type Session,
 } from "./useSessions";
 import { EMPTY_CHAT_SESSION_KEY } from "../constants";
+import { buildNewTaskPath } from "../../../routes/policeCapabilities";
 import {
   getNavigationIntent,
   isLatestNavigationIntent,
@@ -24,6 +25,7 @@ interface UseChatNavigationParams {
   threadId: string | undefined;
   resolvedAgentId: string | null | undefined;
   activeThreadId: string | null;
+  explicitNewTask: boolean;
   sessions: Session[];
   sessionsLoading: boolean;
   prefillInputRef: React.MutableRefObject<string>;
@@ -39,6 +41,7 @@ export function useChatNavigation({
   threadId,
   resolvedAgentId,
   activeThreadId,
+  explicitNewTask,
   sessions,
   sessionsLoading,
   prefillInputRef,
@@ -128,6 +131,7 @@ export function useChatNavigation({
     }
     if (initialNavDone.current === agent) return;
     initialNavDone.current = agent;
+    if (explicitNewTask) return;
     if (sessions.length > 0) {
       const preferred = pickPreferredSession(sessions);
       if (preferred) {
@@ -143,6 +147,7 @@ export function useChatNavigation({
     threadId,
     resolvedAgentId,
     routeAgentId,
+    explicitNewTask,
     navigate,
     prefillInputRef,
   ]);
@@ -162,7 +167,9 @@ export function useChatNavigation({
     }
     if (sessions.length === 0) {
       clearWorkbenchReturn(`/chat/${resolvedAgentId}/${threadId}`);
-      navigate(`/chat/${resolvedAgentId}`, { replace: true });
+      navigate(buildNewTaskPath(resolvedAgentId) ?? `/chat/${resolvedAgentId}`, {
+        replace: true,
+      });
       clearMessages();
       return;
     }
@@ -196,7 +203,9 @@ export function useChatNavigation({
           .catch(() => {});
         navigate(`/chat/${resolvedAgentId}/${preferred.id}`, { replace: true });
       } else {
-        navigate(`/chat/${resolvedAgentId}`, { replace: true });
+        navigate(buildNewTaskPath(resolvedAgentId) ?? `/chat/${resolvedAgentId}`, {
+          replace: true,
+        });
       }
     });
   }, [

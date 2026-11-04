@@ -80,14 +80,23 @@ export default function ChatDockPanels({
     !isMobile &&
     !(dockOpen && dockKind === "browser");
 
-  const showBottom = slot === "bottom" && dockOpen && dockMode === "bottom";
+  const showBottom =
+    slot === "bottom" &&
+    dockOpen &&
+    dockKind === "browser" &&
+    dockMode === "bottom";
   const showSide =
     slot === "side" &&
     dockOpen &&
+    dockKind === "browser" &&
     !isMobile &&
     (dockMode === "right" || dockMode === "popup");
   const showMobilePopup =
-    slot === "side" && isMobile && dockOpen && dockMode === "popup";
+    slot === "side" &&
+    isMobile &&
+    dockOpen &&
+    dockKind === "browser" &&
+    dockMode === "popup";
 
   return (
     <>

@@ -2,9 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   ArtifactChange,
   PreviewDisplayStatus,
+  PreviewRequestToken,
   PreviewSelection,
   PreviewSelectionMode,
+  ResourceError,
+  TaskArtifactItem,
 } from "../workbenchTypes";
+import { parseContextKey } from "../utils/workbenchContext";
+import { projectTaskArtifacts } from "../utils/taskArtifacts";
 
 const FOLLOW_DEBOUNCE_MS = 300;
 
@@ -27,137 +32,294 @@ export interface WorkbenchPreviewController {
   readonly open: (path: string) => void;
   readonly setFollowLatest: () => void;
   readonly applyChanges: (changes: readonly ArtifactChange[]) => void;
-  readonly notifyReadSuccess: () => void;
-  readonly notifyReadFailure: () => void;
-  readonly notifyUnsupported: () => void;
-  readonly notifyDeleted: (path: string) => void;
+  readonly notifyReadSuccess: (token?: PreviewRequestToken) => void;
+  readonly notifyReadFailure: (
+    token?: PreviewRequestToken,
+    error?: ResourceError,
+  ) => void;
+  readonly notifyRenderFailure: (token?: PreviewRequestToken) => void;
+  readonly notifyUnsupported: (token?: PreviewRequestToken) => void;
+  readonly notifyDeleted: (contextKeyOrPath: string, path?: string) => void;
+}
+
+function latestPreviewable(
+  items: readonly TaskArtifactItem[],
+): TaskArtifactItem | null {
+  for (let index = items.length - 1; index >= 0; index -= 1) {
+    const item = items[index];
+    if (
+      item.phase === "confirmed" &&
+      item.previewCapability === "previewable"
+    ) {
+      return item;
+    }
+  }
+  return null;
 }
 
 export function useWorkbenchPreview(
   contextKey: string,
   dock: WorkbenchPreviewDock,
 ): WorkbenchPreviewController {
+  const [selectionState, setSelectionState] =
+    useState<PreviewSelection | null>(null);
   const [revision, setRevision] = useState(0);
   const [mode, setMode] = useState<PreviewSelectionMode>("follow-latest");
   const [displayStatus, setDisplayStatus] =
     useState<PreviewDisplayStatus>("idle");
   const [hasNewArtifact, setHasNewArtifact] = useState(false);
 
+  const dockRef = useRef(dock);
+  dockRef.current = dock;
+  const revisionRef = useRef(0);
   const userDismissedRef = useRef(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const prevContextKeyRef = useRef(contextKey);
+  const seenChangeKeysRef = useRef(new Set<string>());
+  const maxRevisionsRef = useRef(new Map<string, number>());
+  const hasAppliedSnapshotRef = useRef(false);
+  const latestPreviewableRef = useRef<TaskArtifactItem | null>(null);
+  const hasGeneratingRef = useRef(false);
+
+  const selection =
+    selectionState?.contextKey === contextKey ? selectionState : null;
+  const selectionRef = useRef<PreviewSelection | null>(selection);
+  selectionRef.current = selection;
+
+  const selectPath = useCallback(
+    (
+      path: string,
+      nextMode: PreviewSelectionMode,
+      status: PreviewDisplayStatus = "loading",
+    ) => {
+      revisionRef.current += 1;
+      const nextRevision = revisionRef.current;
+      setRevision(nextRevision);
+      setSelectionState({
+        contextKey,
+        path,
+        mode: nextMode,
+        revision: nextRevision,
+      });
+      setMode(nextMode);
+      setDisplayStatus(status);
+      setHasNewArtifact(false);
+      dockRef.current.openFileAt(path);
+    },
+    [contextKey],
+  );
 
   useEffect(() => {
-    if (prevContextKeyRef.current !== contextKey) {
-      prevContextKeyRef.current = contextKey;
-      userDismissedRef.current = false;
-      setRevision(0);
-      setMode("follow-latest");
-      setDisplayStatus("idle");
-      setHasNewArtifact(false);
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = null;
-      }
+    revisionRef.current = 0;
+    setRevision(0);
+    setSelectionState(null);
+    setMode("follow-latest");
+    setDisplayStatus("idle");
+    setHasNewArtifact(false);
+    userDismissedRef.current = false;
+    seenChangeKeysRef.current.clear();
+    maxRevisionsRef.current.clear();
+    hasAppliedSnapshotRef.current = false;
+    latestPreviewableRef.current = null;
+    hasGeneratingRef.current = false;
+    dockRef.current.clearPreviewSelection();
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
     }
   }, [contextKey]);
 
   useEffect(() => {
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
   }, []);
 
   const open = useCallback(
     (path: string) => {
       userDismissedRef.current = false;
-      setMode("manual");
-      dock.openFileAt(path);
-      setRevision((value) => value + 1);
-      setDisplayStatus("loading");
-      setHasNewArtifact(false);
+      selectPath(path, "manual");
     },
-    [dock],
+    [selectPath],
   );
 
   const close = useCallback(() => {
     userDismissedRef.current = true;
-    dock.handleClose();
-  }, [dock]);
+    dockRef.current.handleClose();
+  }, []);
 
   const clearInvalidSelection = useCallback(() => {
-    dock.clearPreviewSelection();
-    setDisplayStatus("idle");
+    dockRef.current.clearPreviewSelection();
+    setSelectionState(null);
+    setDisplayStatus(hasGeneratingRef.current ? "generating" : "idle");
     setHasNewArtifact(false);
-  }, [dock]);
+  }, []);
 
   const refresh = useCallback(() => {
-    setRevision((value) => value + 1);
-    setDisplayStatus("updating");
-  }, []);
+    const current = selectionRef.current;
+    if (current) selectPath(current.path, current.mode, "updating");
+  }, [selectPath]);
 
   const setFollowLatest = useCallback(() => {
+    userDismissedRef.current = false;
     setMode("follow-latest");
     setHasNewArtifact(false);
-  }, []);
+    const latest = latestPreviewableRef.current;
+    if (latest) {
+      selectPath(latest.path, "follow-latest");
+    } else if (hasGeneratingRef.current) {
+      setSelectionState(null);
+      setDisplayStatus("generating");
+    }
+  }, [selectPath]);
 
   const applyChanges = useCallback(
     (changes: readonly ArtifactChange[]) => {
-      const confirmed = changes.filter((c) => c.phase === "confirmed");
-      if (confirmed.length === 0) return;
-      const latest = confirmed[confirmed.length - 1];
+      const context = parseContextKey(contextKey);
+      if (!context) return;
+      const items = projectTaskArtifacts(context, changes);
+      latestPreviewableRef.current = latestPreviewable(items);
+      hasGeneratingRef.current = items.some(
+        (item) => item.phase === "generating",
+      );
+
+      const firstSnapshot = !hasAppliedSnapshotRef.current;
+      hasAppliedSnapshotRef.current = true;
+      const newConfirmed: Extract<
+        ArtifactChange,
+        { readonly phase: "confirmed" }
+      >[] = [];
+
+      for (const change of changes) {
+        if (
+          change.context.agentId !== context.agentId ||
+          change.context.threadId !== context.threadId
+        ) {
+          continue;
+        }
+        if (seenChangeKeysRef.current.has(change.changeKey)) continue;
+        seenChangeKeysRef.current.add(change.changeKey);
+        if (change.phase !== "confirmed") continue;
+        const previousRevision = maxRevisionsRef.current.get(change.path) ?? 0;
+        if (change.revision <= previousRevision) continue;
+        maxRevisionsRef.current.set(change.path, change.revision);
+        newConfirmed.push(change);
+      }
+
+      const actionable = newConfirmed.filter(
+        (change) => firstSnapshot || change.occurredAt !== null,
+      );
+      const current = selectionRef.current;
+
       if (mode === "follow-latest") {
-        if (userDismissedRef.current) {
-          setHasNewArtifact(true);
-          return;
+        const latest = latestPreviewableRef.current;
+        if (latest && actionable.length > 0) {
+          if (userDismissedRef.current) {
+            setHasNewArtifact(true);
+          } else {
+            if (debounceTimerRef.current) {
+              clearTimeout(debounceTimerRef.current);
+            }
+            debounceTimerRef.current = setTimeout(() => {
+              debounceTimerRef.current = null;
+              const next = latestPreviewableRef.current;
+              if (next && !userDismissedRef.current) {
+                selectPath(next.path, "follow-latest");
+              }
+            }, FOLLOW_DEBOUNCE_MS);
+          }
+        } else if (hasGeneratingRef.current && !current) {
+          setDisplayStatus("generating");
+        } else if (items.length === 0) {
+          setDisplayStatus("idle");
         }
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current);
-        }
-        debounceTimerRef.current = setTimeout(() => {
-          debounceTimerRef.current = null;
-          dock.openFileAt(latest.path);
-          setRevision((value) => value + 1);
-          setDisplayStatus("loading");
-        }, FOLLOW_DEBOUNCE_MS);
-      } else {
-        if (dock.filePath && confirmed.some((c) => c.path === dock.filePath)) {
-          setRevision((value) => value + 1);
-          setDisplayStatus("updating");
-        } else {
-          setHasNewArtifact(true);
-        }
+        return;
+      }
+
+      if (!current) {
+        if (newConfirmed.length > 0) setHasNewArtifact(true);
+        if (hasGeneratingRef.current) setDisplayStatus("generating");
+        return;
+      }
+      if (
+        newConfirmed.some(
+          (change) => change.path === current.path && change.kind === "delete",
+        )
+      ) {
+        setDisplayStatus("deleted");
+        return;
+      }
+      if (
+        newConfirmed.some(
+          (change) => change.path === current.path && change.kind !== "delete",
+        )
+      ) {
+        selectPath(current.path, "manual", "updating");
+      } else if (newConfirmed.length > 0) {
+        setHasNewArtifact(true);
       }
     },
-    [mode, dock],
+    [contextKey, mode, selectPath],
   );
 
-  const notifyReadSuccess = useCallback(() => {
-    setDisplayStatus("ready");
+  const isCurrentToken = useCallback((token?: PreviewRequestToken) => {
+    if (!token) return true;
+    const current = selectionRef.current;
+    return (
+      current?.contextKey === token.contextKey &&
+      current.path === token.path &&
+      current.revision === token.revision
+    );
   }, []);
 
-  const notifyReadFailure = useCallback(() => {
-    setDisplayStatus("read-failed");
-  }, []);
+  const notifyReadSuccess = useCallback(
+    (token?: PreviewRequestToken) => {
+      if (isCurrentToken(token)) setDisplayStatus("ready");
+    },
+    [isCurrentToken],
+  );
 
-  const notifyUnsupported = useCallback(() => {
-    setDisplayStatus("unsupported");
-  }, []);
+  const notifyReadFailure = useCallback(
+    (token?: PreviewRequestToken, error?: ResourceError) => {
+      if (!isCurrentToken(token)) return;
+      if (error?.kind === "forbidden" || error?.kind === "unauthorized") {
+        setDisplayStatus("forbidden");
+      } else if (error?.kind === "unavailable") {
+        setDisplayStatus("deleted");
+      } else {
+        setDisplayStatus("read-failed");
+      }
+    },
+    [isCurrentToken],
+  );
+
+  const notifyRenderFailure = useCallback(
+    (token?: PreviewRequestToken) => {
+      if (isCurrentToken(token)) setDisplayStatus("render-failed");
+    },
+    [isCurrentToken],
+  );
+
+  const notifyUnsupported = useCallback(
+    (token?: PreviewRequestToken) => {
+      if (isCurrentToken(token)) setDisplayStatus("unsupported");
+    },
+    [isCurrentToken],
+  );
 
   const notifyDeleted = useCallback(
-    (path: string) => {
-      if (dock.filePath === path) {
+    (contextKeyOrPath: string, path?: string) => {
+      const current = selectionRef.current;
+      if (!current) return;
+      if (
+        path
+          ? current.contextKey === contextKeyOrPath && current.path === path
+          : current.path === contextKeyOrPath
+      ) {
         setDisplayStatus("deleted");
       }
     },
-    [dock],
+    [],
   );
-
-  const selection: PreviewSelection | null = dock.filePath
-    ? { contextKey, path: dock.filePath, mode, revision }
-    : null;
 
   return {
     selection,
@@ -173,6 +335,7 @@ export function useWorkbenchPreview(
     applyChanges,
     notifyReadSuccess,
     notifyReadFailure,
+    notifyRenderFailure,
     notifyUnsupported,
     notifyDeleted,
   };

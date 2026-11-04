@@ -469,21 +469,12 @@ export function removeSession(sessionId: string) {
   }
 }
 
-/** Rename a cached session's key (e.g. temp id → real UUID).
- *  Keeps the old key as an alias so that components still subscribed
- *  to the old id continue to receive updates until they remount.   */
 export function renameSessionKey(oldId: string, newId: string) {
   const state = sessionStates.get(oldId);
   if (state && oldId !== newId) {
-    // Both keys point to the same state object, so subscribers on
-    // either key see the same messages / streaming status.
     sessionStates.set(newId, state);
-    // Notify listeners so that components subscribed under the new key
-    // (after a navigate) immediately see the existing messages.
+    sessionStates.delete(oldId);
     notify(state);
-    // Don't delete oldId — the current component may still be
-    // subscribed to it.  It will be cleaned up when the component
-    // remounts with the new id.
   }
 }
 

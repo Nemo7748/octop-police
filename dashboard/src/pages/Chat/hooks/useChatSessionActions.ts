@@ -6,6 +6,7 @@ import {
   isLatestNavigationIntent,
 } from "../../../utils/navigationIntent";
 import { pickPreferredSession, toSession, type Session } from "./useSessions";
+import { buildNewTaskPath } from "../../../routes/policeCapabilities";
 
 interface UseChatSessionActionsParams {
   resolvedAgentId: string | null | undefined;
@@ -44,7 +45,8 @@ export function useChatSessionActions({
     const agent = resolvedAgentId;
     if (!agent) return;
     beginNavigationIntent();
-    navigate(`/chat/${agent}`);
+    const path = buildNewTaskPath(agent);
+    if (path) navigate(path);
   }, [navigate, resolvedAgentId, setSelectedModel, setHasBrowserTool]);
 
   const handleSelectSession = useCallback(
@@ -118,7 +120,8 @@ export function useChatSessionActions({
         if (preferred) {
           navigate(`/chat/${agent}/${preferred.id}`, { replace: true });
         } else {
-          navigate(`/chat/${agent}`, { replace: true });
+          const path = buildNewTaskPath(agent);
+          if (path) navigate(path, { replace: true });
           clearMessages();
         }
       }

@@ -3259,7 +3259,26 @@
       "notAvailable": "Unavailable",
       "noPermission": "No permission"
     },
+    "task": {
+      "navigation": "Task navigation",
+      "newTitle": "Start a new task",
+      "newDescription": "Describe your goal and send the first message. Conversation, progress, and generated artifacts will update here.",
+      "loadFailed": "Failed to load tasks",
+      "manageFailed": "Task operation failed. Please retry",
+      "retry": "Retry",
+      "empty": "No tasks yet. Start a new task"
+    },
+    "results": {
+      "title": "Generated artifacts",
+      "empty": "Artifacts will appear here after generation",
+      "count": "{{count}} artifacts",
+      "followLatest": "Follow latest",
+      "manual": "Manual preview",
+      "following": "Following the latest artifact",
+      "timeUnknown": "Time unknown"
+    },
     "runStatus": {
+      "not-started": "Not started",
       "running": "Running",
       "done": "Done",
       "failed": "Failed",
@@ -3354,6 +3373,7 @@
       "generating": "Artifact is being generated",
       "updating": "Artifact is updating",
       "updateFailed": "Artifact update failed. Retry available",
+      "stale": "Content may not be the latest version",
       "deleted": "This artifact was deleted or is unavailable",
       "newArtifactAvailable": "A new artifact is available",
       "backgroundUpdated": "An update is available in the background",

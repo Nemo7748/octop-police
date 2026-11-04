@@ -52,7 +52,13 @@ function useDockResizing(elRef: RefObject<HTMLElement | null>): boolean {
  * During dock resize, freeze a DOM snapshot so markdown does not reflow (jank)
  * and the panel does not flash blank (unmount).
  */
-function MarkdownPreview({ content }: { content: string }) {
+function MarkdownPreview({
+  content,
+  onRenderFailure,
+}: {
+  content: string;
+  onRenderFailure?: () => void;
+}) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const liveRef = useRef<HTMLDivElement | null>(null);
   const freezeHtmlRef = useRef("");
@@ -98,7 +104,10 @@ function MarkdownPreview({ content }: { content: string }) {
         />
       ) : (
         <div ref={liveRef}>
-          <MarkdownErrorBoundary sourceText={content}>
+          <MarkdownErrorBoundary
+            sourceText={content}
+            onError={onRenderFailure}
+          >
             <Markdown content={content} className={styles.markdownPreview} />
           </MarkdownErrorBoundary>
         </div>
@@ -150,13 +159,17 @@ function HtmlPreview({ content }: { content: string }) {
 export default function FilePreview({
   kind,
   content,
+  onRenderFailure,
 }: {
   kind: PreviewKind;
   content: string;
+  onRenderFailure?: () => void;
 }) {
   switch (kind) {
     case "markdown":
-      return <MarkdownPreview content={content} />;
+      return (
+        <MarkdownPreview content={content} onRenderFailure={onRenderFailure} />
+      );
     case "html":
       // Render in a sandboxed iframe with an opaque origin (no
       // ``allow-same-origin``) so the previewed markup cannot reach our

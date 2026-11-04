@@ -4,12 +4,17 @@ import type {
   ArtifactChange,
   ChangeKind,
   ChangeRecord,
+  TaskArtifactItem,
   WorkbenchContextKey,
   WorkspaceArtifact,
 } from "../workbenchTypes";
+import { isProbablyText } from "../../Agent/Workspace/utils/fileKind";
+import { getMediaKind } from "../../Agent/Workspace/utils/mediaKind";
+import { getDocKind } from "../../Agent/Workspace/utils/docKind";
 import {
   dedupeArtifacts,
   dedupeChanges,
+  makeContextKey,
   normalizeWorkspacePath,
 } from "./workbenchContext";
 
@@ -113,52 +118,74 @@ export function mergeTaskArtifacts(
 ): readonly WorkspaceArtifact[] {
   return dedupeArtifacts([...messageArtifacts, ...workspaceArtifacts]);
 }
-const PREVIEWABLE_EXTENSIONS = new Set([
-  "html",
-  "htm",
-  "md",
-  "markdown",
-  "py",
-  "js",
-  "ts",
-  "tsx",
-  "jsx",
-  "java",
-  "c",
-  "cpp",
-  "h",
-  "hpp",
-  "cs",
-  "go",
-  "rs",
-  "rb",
-  "php",
-  "sh",
-  "bash",
-  "yml",
-  "yaml",
-  "toml",
-  "ini",
-  "cfg",
-  "conf",
-  "vue",
-  "svelte",
-  "sql",
-  "json",
-  "jsonc",
-  "pptx",
-  "docx",
-  "xlsx",
-  "pdf",
-]);
+export function getArtifactPreviewCapability(
+  path: string,
+): TaskArtifactItem["previewCapability"] {
+  const docKind = getDocKind(path);
+  if (
+    isProbablyText(path) ||
+    getMediaKind(path) !== null ||
+    (docKind !== null && docKind !== "ppt")
+  ) {
+    return "previewable";
+  }
+  return "unsupported";
+}
 
-function isPreviewablePath(normalizedPath: string): boolean {
-  const lastSegment = normalizedPath.split("/").pop() ?? "";
-  const dotIndex = lastSegment.lastIndexOf(".");
-  if (dotIndex <= 0 || dotIndex === lastSegment.length - 1) return false;
-  return PREVIEWABLE_EXTENSIONS.has(
-    lastSegment.slice(dotIndex + 1).toLowerCase(),
-  );
+export function projectTaskArtifacts(
+  context: WorkbenchContextKey,
+  changes: readonly ArtifactChange[],
+): readonly TaskArtifactItem[] {
+  const contextKey = makeContextKey(context);
+  const byPath = new Map<string, TaskArtifactItem>();
+  const seenChangeKeys = new Set<string>();
+
+  for (const change of changes) {
+    if (
+      change.context.agentId !== context.agentId ||
+      change.context.threadId !== context.threadId ||
+      seenChangeKeys.has(change.changeKey)
+    ) {
+      continue;
+    }
+    seenChangeKeys.add(change.changeKey);
+    const path = normalizeWorkspacePath(change.path);
+    if (!path || isIgnoredArtifactPath(path)) continue;
+    const previous = byPath.get(path);
+    if (change.phase === "generating") {
+      byPath.set(path, {
+        contextKey,
+        path,
+        name: path.split("/").pop() ?? path,
+        kind: change.kind,
+        phase: "generating",
+        revision: null,
+        occurredAt: change.occurredAt,
+        previewCapability: getArtifactPreviewCapability(path),
+      });
+      continue;
+    }
+    if (
+      previous &&
+      previous.phase !== "generating" &&
+      previous.revision !== null &&
+      change.revision <= previous.revision
+    ) {
+      continue;
+    }
+    byPath.set(path, {
+      contextKey,
+      path,
+      name: path.split("/").pop() ?? path,
+      kind: change.kind,
+      phase: change.kind === "delete" ? "deleted" : "confirmed",
+      revision: change.revision,
+      occurredAt: change.occurredAt,
+      previewCapability: getArtifactPreviewCapability(path),
+    });
+  }
+
+  return Array.from(byPath.values());
 }
 
 function isIgnoredArtifactPath(normalizedPath: string): boolean {
@@ -196,7 +223,7 @@ export function deriveArtifactChangesFromMessages(
     const normalized = normalizeWorkspacePath(rawPath);
     if (!normalized) continue;
     if (isIgnoredArtifactPath(normalized)) continue;
-    if (!isPreviewablePath(normalized)) continue;
+
     const callId = message.toolData?.callId ?? message.id;
     const kind = changeKindOf(toolName);
     const occurredAt = message.timestamp

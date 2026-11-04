@@ -17,6 +17,7 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import RequireAdmin from "../../components/RequireAdmin";
 import PoliceRouteBoundary from "../../components/PoliceRouteBoundary";
 import PoliceSkillRail from "../../pages/Chat/components/PoliceSkillRail";
+import PoliceWorkbenchRouteFallback from "../../pages/Chat/components/PoliceWorkbenchRouteFallback";
 import { isPoliceWorkbenchPath } from "../../routes/policeCapabilities";
 
 const Chat = lazy(() => import("../../pages/Chat"));
@@ -108,16 +109,20 @@ export default function MainLayout() {
     <PoliceRouteBoundary>
       <Suspense
         fallback={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              flex: 1,
-            }}
-          >
-            <Spin size="large" />
-          </div>
+          isPoliceWorkbenchRoute ? (
+            <PoliceWorkbenchRouteFallback skillRail={<PoliceSkillRail />} />
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                flex: 1,
+              }}
+            >
+              <Spin size="large" />
+            </div>
+          )
         }
       >
         <Routes>

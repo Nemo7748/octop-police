@@ -1,21 +1,23 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Image } from "antd";
 import { useTranslation } from "react-i18next";
 import { requestBlob } from "../../../../api/request";
 import { asImageBlob } from "../../../../utils/toolMediaBlocks";
 import type { MediaKind } from "../utils/mediaKind";
+import {
+  toPreviewResourceError,
+  type FileViewerStatusProps,
+} from "./previewLoadState";
 import styles from "../index.module.less";
 
-function guessVideoMime(filename: string): string {
+function guessMediaMime(kind: MediaKind, filename: string): string {
   const ext = filename.split(".").pop()?.toLowerCase();
-  if (ext === "webm") return "video/webm";
-  if (ext === "mov" || ext === "m4v") return "video/quicktime";
-  if (ext === "ogv") return "video/ogg";
-  return "video/mp4";
-}
-
-function guessAudioMime(filename: string): string {
-  const ext = filename.split(".").pop()?.toLowerCase();
+  if (kind === "video") {
+    if (ext === "webm") return "video/webm";
+    if (ext === "mov" || ext === "m4v") return "video/quicktime";
+    if (ext === "ogv") return "video/ogg";
+    return "video/mp4";
+  }
   if (ext === "wav") return "audio/wav";
   if (ext === "ogg" || ext === "opus") return "audio/ogg";
   if (ext === "m4a" || ext === "aac") return "audio/mp4";
@@ -24,196 +26,11 @@ function guessAudioMime(filename: string): string {
   return "audio/mpeg";
 }
 
-function MediaFallback({ label }: { label: string }) {
-  return <span className={styles.mediaFallback}>{label}</span>;
-}
-
-function useWorkspaceBlob(
-  agentId: string,
-  path: string,
-  filename: string,
-  toBlob: (blob: Blob, filename: string) => Blob,
-  refreshToken = 0,
-) {
-  const [src, setSrc] = useState("");
-  const objectUrlRef = useRef<string | undefined>(undefined);
-
-  const apiPath = useMemo(() => {
-    // Pass the path shape through unchanged: absolute stays absolute (as file://
-    // for the query string), relative stays relative.
-    const source = path.startsWith("file://")
-      ? path
-      : path.startsWith("/")
-      ? `file://${path}`
-      : path.replace(/^\/+/, "");
-    return `/agents/${encodeURIComponent(
-      agentId,
-    )}/media/preview?${new URLSearchParams({ source }).toString()}`;
-  }, [agentId, path]);
-
-  useLayoutEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      try {
-        const blob = await requestBlob(apiPath);
-        if (cancelled) return;
-        const objUrl = URL.createObjectURL(toBlob(blob, filename));
-        if (objectUrlRef.current) {
-          URL.revokeObjectURL(objectUrlRef.current);
-        }
-        objectUrlRef.current = objUrl;
-        setSrc(objUrl);
-      } catch {
-        if (!cancelled) setSrc("error");
-      }
-    };
-
-    // Keep the previous frame visible while refreshing; only clear on first load.
-    if (!objectUrlRef.current) {
-      setSrc("");
-    }
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [apiPath, filename, toBlob, refreshToken]);
-
-  useLayoutEffect(() => {
-    return () => {
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = undefined;
-      }
-    };
-  }, []);
-
-  return src;
-}
-
-function WorkspaceImage({
-  agentId,
-  path,
-  filename,
-  refreshToken = 0,
-}: {
-  agentId: string;
-  path: string;
-  filename: string;
-  refreshToken?: number;
-}) {
-  const { t } = useTranslation();
-  const src = useWorkspaceBlob(
-    agentId,
-    path,
-    filename,
-    asImageBlob,
-    refreshToken,
-  );
-
-  if (src === "error") {
-    return (
-      <MediaFallback label={t("workspace.mediaLoadFailed", "无法加载预览")} />
-    );
-  }
-
-  if (!src) {
-    return <MediaFallback label="…" />;
-  }
-
-  return (
-    <div className={styles.mediaPreviewFrame}>
-      <Image src={src} alt={filename} className={styles.mediaPreviewImage} />
-    </div>
-  );
-}
-
-function WorkspaceVideo({
-  agentId,
-  path,
-  filename,
-  refreshToken = 0,
-}: {
-  agentId: string;
-  path: string;
-  filename: string;
-  refreshToken?: number;
-}) {
-  const { t } = useTranslation();
-  const toBlob = useMemo(
-    () => (blob: Blob, name: string) =>
-      blob.type && blob.type !== "application/octet-stream"
-        ? blob
-        : new Blob([blob], { type: guessVideoMime(name) }),
-    [],
-  );
-  const src = useWorkspaceBlob(agentId, path, filename, toBlob, refreshToken);
-
-  if (src === "error") {
-    return (
-      <MediaFallback label={t("workspace.mediaLoadFailed", "无法加载预览")} />
-    );
-  }
-
-  if (!src) {
-    return <MediaFallback label="…" />;
-  }
-
-  return (
-    <div className={styles.mediaPreviewFrame}>
-      <video
-        className={styles.mediaPreviewVideo}
-        src={src}
-        controls
-        preload="metadata"
-        playsInline
-      />
-    </div>
-  );
-}
-
-function WorkspaceAudio({
-  agentId,
-  path,
-  filename,
-  refreshToken = 0,
-}: {
-  agentId: string;
-  path: string;
-  filename: string;
-  refreshToken?: number;
-}) {
-  const { t } = useTranslation();
-  const toBlob = useMemo(
-    () => (blob: Blob, name: string) =>
-      blob.type && blob.type !== "application/octet-stream"
-        ? blob
-        : new Blob([blob], { type: guessAudioMime(name) }),
-    [],
-  );
-  const src = useWorkspaceBlob(agentId, path, filename, toBlob, refreshToken);
-
-  if (src === "error") {
-    return (
-      <MediaFallback label={t("workspace.mediaLoadFailed", "无法加载预览")} />
-    );
-  }
-
-  if (!src) {
-    return <MediaFallback label="…" />;
-  }
-
-  return (
-    <div className={styles.mediaPreviewFrame}>
-      <audio
-        className={styles.mediaPreviewAudio}
-        src={src}
-        controls
-        preload="metadata"
-      />
-    </div>
-  );
+interface MediaPreviewProps extends FileViewerStatusProps {
+  readonly agentId: string;
+  readonly path: string;
+  readonly kind: MediaKind;
+  readonly refreshToken?: number;
 }
 
 export default function MediaPreview({
@@ -221,43 +38,96 @@ export default function MediaPreview({
   path,
   kind,
   refreshToken = 0,
-}: {
-  agentId: string;
-  path: string;
-  kind: MediaKind;
-  refreshToken?: number;
-}) {
+  onLoadStateChange,
+}: MediaPreviewProps) {
+  const { t } = useTranslation();
   const filename = path.split("/").filter(Boolean).pop() || path;
+  const [src, setSrc] = useState("");
+  const objectUrlRef = useRef<string | undefined>(undefined);
+  const apiPath = useMemo(() => {
+    const source = path.startsWith("file://")
+      ? path
+      : path.startsWith("/")
+        ? `file://${path}`
+        : path.replace(/^\/+/, "");
+    return `/agents/${encodeURIComponent(agentId)}/media/preview?${new URLSearchParams({ source }).toString()}`;
+  }, [agentId, path]);
 
-  switch (kind) {
-    case "image":
-      return (
-        <WorkspaceImage
-          agentId={agentId}
-          path={path}
-          filename={filename}
-          refreshToken={refreshToken}
-        />
-      );
-    case "video":
-      return (
-        <WorkspaceVideo
-          agentId={agentId}
-          path={path}
-          filename={filename}
-          refreshToken={refreshToken}
-        />
-      );
-    case "audio":
-      return (
-        <WorkspaceAudio
-          agentId={agentId}
-          path={path}
-          filename={filename}
-          refreshToken={refreshToken}
-        />
-      );
-    default:
-      return null;
+  useEffect(() => {
+    const abortController = new AbortController();
+    onLoadStateChange?.({
+      status: "loading",
+      hasPrevious: Boolean(objectUrlRef.current),
+    });
+    const load = async () => {
+      try {
+        const response = await requestBlob(apiPath, {
+          signal: abortController.signal,
+        });
+        if (abortController.signal.aborted) return;
+        const blob =
+          kind === "image"
+            ? asImageBlob(response, filename)
+            : response.type && response.type !== "application/octet-stream"
+              ? response
+              : new Blob([response], { type: guessMediaMime(kind, filename) });
+        const objectUrl = URL.createObjectURL(blob);
+        if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = objectUrl;
+        setSrc(objectUrl);
+        onLoadStateChange?.({ status: "ready" });
+      } catch (error) {
+        if (abortController.signal.aborted) return;
+        if (!objectUrlRef.current) setSrc("error");
+        onLoadStateChange?.({
+          status: "read-failed",
+          error: toPreviewResourceError(error),
+        });
+      }
+    };
+    void load();
+    return () => abortController.abort();
+  }, [apiPath, filename, kind, refreshToken, onLoadStateChange]);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = undefined;
+    };
+  }, []);
+
+  if (src === "error" || !src) {
+    return (
+      <span className={styles.mediaFallback}>
+        {src === "error"
+          ? t("workspace.mediaLoadFailed", "无法加载预览")
+          : "…"}
+      </span>
+    );
   }
+
+  return (
+    <div className={styles.mediaPreviewFrame}>
+      {kind === "image" && (
+        <Image src={src} alt={filename} className={styles.mediaPreviewImage} />
+      )}
+      {kind === "video" && (
+        <video
+          className={styles.mediaPreviewVideo}
+          src={src}
+          controls
+          preload="metadata"
+          playsInline
+        />
+      )}
+      {kind === "audio" && (
+        <audio
+          className={styles.mediaPreviewAudio}
+          src={src}
+          controls
+          preload="metadata"
+        />
+      )}
+    </div>
+  );
 }

@@ -138,7 +138,7 @@ describe("useWorkbenchPreview 状态机", () => {
     expect(result.current.selection?.path).toBe("outbound/a.md");
   });
 
-  it("close 后 follow-latest 不自动重开但设置 hasNewArtifact", () => {
+  it("close 后恢复 follow-latest 会打开最新产物并清除提醒", () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useDockWithPreview("a1:t1"));
     act(() => result.current.open("outbound/a.md"));
@@ -152,8 +152,8 @@ describe("useWorkbenchPreview 状态机", () => {
     act(() => {
       vi.advanceTimersByTime(300);
     });
-    expect(result.current.hasNewArtifact).toBe(true);
-    expect(result.current.selection?.path).toBe("outbound/a.md");
+    expect(result.current.hasNewArtifact).toBe(false);
+    expect(result.current.selection?.path).toBe("outbound/b.md");
     vi.useRealTimers();
   });
 

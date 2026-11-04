@@ -42,6 +42,8 @@ export type TaskRunStatus =
   | "cancelled"
   | "unknown";
 
+export type WorkspaceRunStatus = TaskRunStatus | "not-started";
+
 export interface TaskCatalogItem {
   readonly agentId: string;
   readonly threadId: string;
@@ -93,6 +95,20 @@ export type ArtifactChange =
       readonly phase: "confirmed";
       readonly revision: number;
     });
+
+export type ArtifactPhase = "generating" | "confirmed" | "deleted";
+export type ArtifactPreviewCapability = "previewable" | "unsupported";
+
+export interface TaskArtifactItem {
+  readonly contextKey: string;
+  readonly path: string;
+  readonly name: string;
+  readonly kind: ChangeKind;
+  readonly phase: ArtifactPhase;
+  readonly revision: number | null;
+  readonly occurredAt: string | null;
+  readonly previewCapability: ArtifactPreviewCapability;
+}
 
 export interface TaskBrief {
   readonly delivered: readonly string[];
@@ -150,11 +166,27 @@ export interface PreviewSelection {
   readonly revision: number;
 }
 
+export interface PreviewRequestToken {
+  readonly contextKey: string;
+  readonly path: string;
+  readonly revision: number;
+}
+
+export type PreviewDiagnosticReason =
+  | "context-mismatch"
+  | "stale-revision"
+  | "duplicate-change"
+  | "read-failed"
+  | "render-failed"
+  | "forbidden"
+  | "unsupported";
+
 export interface PreviewDiagnostic {
+  readonly occurredAt: string;
   readonly contextKey: string;
   readonly path: string;
   readonly changeKind: ChangeKind | "manual";
   readonly revision: number;
   readonly result: "opened" | "updated" | "ignored" | "failed";
-  readonly reason?: string;
+  readonly reason?: PreviewDiagnosticReason;
 }

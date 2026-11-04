@@ -7,6 +7,7 @@ import { beginNavigationIntent } from "../utils/navigationIntent";
 import { readWorkbenchReturn } from "../utils/workbenchReturnStore";
 import { workbenchDiagnostics } from "../utils/workbenchDiagnostics";
 import {
+  buildNewTaskPath,
   getPoliceCapability,
   isPoliceWorkbenchPath,
   resolvePoliceCapability,
@@ -88,7 +89,7 @@ export function usePoliceNavigation(): PoliceNavigationController {
         const storedReturn = readWorkbenchReturn();
         const onWorkbench = isPoliceWorkbenchPath(location.pathname);
         if (intent === "new-task" && currentAgentId) {
-          targetPath = `/chat/${currentAgentId}`;
+          targetPath = buildNewTaskPath(currentAgentId) ?? capability.path;
         } else if (
           (request.capabilityId === "assistants" ||
             request.capabilityId === "messages") &&

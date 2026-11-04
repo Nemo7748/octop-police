@@ -33,6 +33,7 @@ interface WelcomeScreenProps {
   welcomeSuffix?: string | null;
   quickCards: WelcomeQuickCard[];
   hideMascot?: boolean;
+  newTask?: boolean;
   workbenchOverview?: React.ReactNode;
 }
 
@@ -42,6 +43,7 @@ export default function WelcomeScreen({
   welcomeSuffix,
   quickCards,
   hideMascot = false,
+  newTask = false,
   workbenchOverview,
 }: WelcomeScreenProps) {
   const { t } = useTranslation();
@@ -66,7 +68,7 @@ export default function WelcomeScreen({
     <div className={styles.welcome} ref={welcomeRef}>
       <div className={styles.welcomeInner}>
         <div className={styles.welcomeHeading} ref={headingRef}>
-          {!hideMascot && !autoHideMascot && (
+          {!newTask && !hideMascot && !autoHideMascot && (
             <video
               key={mascotSrc}
               className={styles.welcomeMascot}
@@ -92,9 +94,18 @@ export default function WelcomeScreen({
               }}
             />
           )}
-          <h1 className={styles.welcomeTitle}>{t("chatWelcome.greeting")}</h1>
+          <h1 className={styles.welcomeTitle}>
+            {newTask
+              ? t("policeWorkbench.task.newTitle", "开始一个新任务")
+              : t("chatWelcome.greeting")}
+          </h1>
           <p className={styles.welcomeSubtitle}>
-            {agentName ? (
+            {newTask ? (
+              t(
+                "policeWorkbench.task.newDescription",
+                "描述目标并发送首条消息，对话、执行进度与生成产物将在这里持续更新。",
+              )
+            ) : agentName ? (
               <>
                 <span className={styles.welcomeAgentMention}>@{agentName}</span>
                 <span className={styles.welcomeSubtitleText}>
@@ -107,9 +118,9 @@ export default function WelcomeScreen({
           </p>
         </div>
 
-        {workbenchOverview}
+        {!newTask && workbenchOverview}
 
-        {quickCards.length > 0 && (
+        {!newTask && quickCards.length > 0 && (
           <WelcomeQuickCards
             cards={cards}
             showToggle={showToggle}

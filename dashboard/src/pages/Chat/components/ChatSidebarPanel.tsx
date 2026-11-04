@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { RefObject } from "react";
 import SessionList from "./SessionList";
 import type { Session } from "../hooks/useSessions";
+import type { ResourceError } from "../workbenchTypes";
 import type { OctopAgent } from "../../../context/AgentContext";
 import styles from "../index.module.less";
 
@@ -13,12 +14,16 @@ interface ChatSidebarPanelProps {
   sidebarWidth: number;
   isSidebarResizing?: boolean;
   sidebarElRef?: RefObject<HTMLDivElement>;
+  managed?: boolean;
+  collapsible?: boolean;
   agents: OctopAgent[];
   sessions: Session[];
   activeThreadId: string | null;
   resolvedAgentId: string | null | undefined;
   sessionsHasMore: boolean;
   sessionsLoadingMore: boolean;
+  sessionsError?: ResourceError | null;
+  onRetrySessions?: () => void;
   onLoadMoreSessions: () => void;
   onFetchAllSessions: () => void;
   onSelectSession: (sessionId: string, agentId: string) => void;
@@ -36,12 +41,16 @@ export default function ChatSidebarPanel({
   sidebarWidth,
   isSidebarResizing = false,
   sidebarElRef,
+  managed = false,
+  collapsible = true,
   agents,
   sessions,
   activeThreadId,
   resolvedAgentId,
   sessionsHasMore,
   sessionsLoadingMore,
+  sessionsError = null,
+  onRetrySessions,
   onLoadMoreSessions,
   onFetchAllSessions,
   onSelectSession,
@@ -57,10 +66,12 @@ export default function ChatSidebarPanel({
   return (
     <div
       className={`${styles.sidebarWrapper} ${
-        !isMobile && !sidebarOpen ? styles.sidebarWrapperCollapsed : ""
+        !managed && !isMobile && !sidebarOpen
+          ? styles.sidebarWrapperCollapsed
+          : ""
       }`}
     >
-      {isMobile && sidebarOpen && (
+      {!managed && isMobile && sidebarOpen && (
         <div
           className={styles.overlay}
           onClick={() => onSidebarOpenChange(false)}
@@ -70,12 +81,14 @@ export default function ChatSidebarPanel({
       <div
         ref={sidebarElRef}
         className={`${styles.sidebar} ${
-          sidebarOpen ? styles.sidebarOpen : ""
+          managed || sidebarOpen ? styles.sidebarOpen : ""
         } ${isSidebarResizing ? styles.sidebarResizing : ""}`}
         style={
-          !isMobile && sidebarOpen
-            ? { width: sidebarWidth, minWidth: sidebarWidth }
-            : undefined
+          managed
+            ? { width: "100%", minWidth: 0 }
+            : !isMobile && sidebarOpen
+              ? { width: sidebarWidth, minWidth: sidebarWidth }
+              : undefined
         }
       >
         <SessionList
@@ -85,6 +98,8 @@ export default function ChatSidebarPanel({
           activeAgentId={resolvedAgentId ?? null}
           hasMore={sessionsHasMore}
           loadingMore={sessionsLoadingMore}
+          error={sessionsError}
+          onRetry={onRetrySessions}
           onLoadMore={onLoadMoreSessions}
           onFetchAllSessions={onFetchAllSessions}
           onSelect={onSelectSession}
@@ -93,7 +108,7 @@ export default function ChatSidebarPanel({
           onRename={onRenameSession}
           onPin={onPinSession}
         />
-        {!isMobile && sidebarOpen && (
+        {!managed && !isMobile && sidebarOpen && (
           <div
             className={`${styles.sidebarResizeHandle} ${
               isSidebarResizing ? styles.sidebarResizeHandleActive : ""
@@ -106,7 +121,7 @@ export default function ChatSidebarPanel({
         )}
       </div>
 
-      {!isMobile && (
+      {!managed && !isMobile && collapsible && (
         <Tooltip
           title={
             sidebarOpen

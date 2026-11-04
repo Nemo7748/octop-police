@@ -4,18 +4,18 @@
   "group": "police-development",
   "order": 2,
   "label": {
-    "zh": "AI自然语言生成助手",
-    "en": "NL Generation Assistant"
+    "zh": "分类智填提醒审档助手",
+    "en": "Classify · Auto-fill · Remind · Review"
   },
   "description": {
-    "zh": "基于警务大模型，支持自然语言交互问答，快速生成文书材料、提供办案思路与知识检索。",
-    "en": "Police LLM assistant for NL Q&A: fast document drafting, case-handling ideas and knowledge retrieval."
+    "zh": "智能分类归档案件卷宗，自动填充标准化表单，关键节点到期提醒，辅助卷宗审档复核。",
+    "en": "Classify and file case dossiers, auto-fill standardized forms, remind on key deadlines and assist dossier review."
   },
   "welcome_message": {
-    "zh": "直接提问或描述要写的文书材料，我来回答与起草",
-    "en": "Ask a question or describe the document you need — I'll answer and draft"
+    "zh": "提供卷宗材料与办理节点，我来分类归档、填单、提醒与审档",
+    "en": "Share dossier materials and deadlines — I'll classify, fill forms, remind and review"
   },
-  "icon_name": "message-square-text",
+  "icon_name": "folder-input",
   "color": "#0ea5e9",
   "prompt_files": [
     "SOUL.md"
@@ -23,19 +23,19 @@
   "quick_prompts": [
     {
       "title": {
-        "zh": "起草警务文书",
-        "en": "Draft police document"
+        "zh": "分类归档卷宗",
+        "en": "Classify and file"
       },
       "description": {
-        "zh": "输入：文书类型、案情要素与语气要求。预期产物：outbound/<task>/ 下的 document.md（文书草稿）与 notes.md（办案思路/知识要点）",
-        "en": "Input: document type, case facts and tone. Output: document.md (draft) and notes.md (case ideas/knowledge) under outbound/<task>/"
+        "zh": "输入：待分类的案件卷宗材料。预期产物：outbound/<task>/ 下的 classification.md（分类结果与归档建议）与 checklist.md（要素勾选清单）",
+        "en": "Input: case dossier materials to classify. Output: classification.md and checklist.md under outbound/<task>/"
       },
       "prompt": {
-        "zh": "请帮我起草警务文书材料。\n\n文书类型（如情况说明、询问提纲、工作汇报）：\n\n案情要素与背景：\n\n预期产物：在 outbound/<task>/ 下生成 document.md（规范文书草稿）和 notes.md（办案思路与相关知识检索要点）。涉及真实案件的信息用我提供的内容，其余示例明确标注为演示数据。",
-        "en": "Please draft a police document.\n\nDocument type (situation report, interview outline, work summary):\n\nCase facts and background:\n\nExpected output: document.md (formatted draft) and notes.md (case-handling ideas and knowledge points) under outbound/<task>/. Use my case facts; label any other examples as demo data."
+        "zh": "请对以下卷宗材料做分类归档。\n\n卷宗材料与办理节点：\n\n预期产物：在 outbound/<task>/ 下生成 classification.md（案件分类、归档目录建议）和 checklist.md（标准化表单要素勾选清单），并列出关键节点到期提醒。分类依据我提供的内容，缺失字段标注\"待补充\"，示例标注为演示数据。",
+        "en": "Please classify and file the following dossier materials.\n\nDossier materials and case milestones:\n\nExpected output: classification.md (case class, filing suggestions) and checklist.md (standardized form element checklist) under outbound/<task>/, plus a list of upcoming deadline reminders. Base classification on my content; mark missing fields \"to be filled\" and examples as demo data."
       },
       "color": "#e0f2fe",
-      "icon_name": "message-square-text"
+      "icon_name": "folder-input"
     }
   ]
 }

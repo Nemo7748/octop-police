@@ -330,6 +330,15 @@ export const POLICE_CAPABILITIES: readonly PoliceCapability[] = [
   },
 ];
 
+export function buildNewTaskPath(agentId: string): string | null {
+  const normalizedAgentId = agentId.trim();
+  return normalizedAgentId ? `/chat/${normalizedAgentId}?new=1` : null;
+}
+
+export function isExplicitNewTask(search: string): boolean {
+  return new URLSearchParams(search).get("new") === "1";
+}
+
 function normalizePathname(pathname: string): string {
   if (pathname === "/") return pathname;
   return pathname.replace(/\/+$/, "");

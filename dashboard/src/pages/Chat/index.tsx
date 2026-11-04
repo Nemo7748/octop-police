@@ -39,6 +39,7 @@ import { ChatFilePreviewProvider } from "./ChatFilePreviewContext";
 import ChatSidebarPanel from "./components/ChatSidebarPanel";
 import ChatComposerChrome from "./components/ChatComposerChrome";
 import PoliceWorkbenchShell from "./components/PoliceWorkbenchShell";
+import TaskResultPanel from "./components/TaskResultPanel";
 import PoliceSkillRail from "./components/PoliceSkillRail";
 import WorkbenchStatusBar from "./components/WorkbenchStatusBar";
 import WorkspaceOverview from "./components/WorkspaceOverview";
@@ -53,12 +54,18 @@ import {
 import { usePoliceAgentLaunch } from "./hooks/usePoliceAgentLaunch";
 import { launchRecommendedSkill } from "./utils/policeSkillLaunch";
 import { useWorkbenchUi } from "./hooks/useWorkbenchUi";
+import { useWorkbenchLayout } from "./hooks/useWorkbenchLayout";
 import {
   getSnapshot as getComposerDraft,
   setPendingGuidance,
 } from "./hooks/composerDraftStore";
 import { makeContextKey } from "./utils/workbenchContext";
-import type { SendReceipt } from "./workbenchTypes";
+import { projectTaskArtifacts } from "./utils/taskArtifacts";
+import type {
+  ResourceState,
+  SendReceipt,
+  TaskArtifactItem,
+} from "./workbenchTypes";
 import {
   formatAgentState,
   isAgentChatReady,
@@ -66,7 +73,11 @@ import {
 import { normalizeUiLocale } from "../../utils/localePrefs";
 import { beginNavigationIntent } from "../../utils/navigationIntent";
 import { promptNeedsUserInput } from "../../utils/quickInputPrefill";
-import type { WorkbenchNavigationState } from "../../routes/policeCapabilities";
+import {
+  buildNewTaskPath,
+  isExplicitNewTask,
+  type WorkbenchNavigationState,
+} from "../../routes/policeCapabilities";
 import styles from "./index.module.less";
 
 const EMPTY_AGENTS_BY_TEMPLATE: ReadonlyMap<
@@ -123,7 +134,10 @@ function ChatPageInner() {
   // on subsequent visits or page refreshes.
   useEffect(() => {
     if (prefillInputRef.current) {
-      navigate(location.pathname, { replace: true, state: {} });
+      navigate(`${location.pathname}${location.search}`, {
+        replace: true,
+        state: {},
+      });
     }
     // Only run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -141,11 +155,15 @@ function ChatPageInner() {
     if (val && val !== prefillInputRef.current) {
       prefillInputRef.current = val;
       chatInputRef.current?.setPrefillText(val);
-      navigate(location.pathname, { replace: true, state: {} });
+      navigate(`${location.pathname}${location.search}`, {
+        replace: true,
+        state: {},
+      });
     }
-  }, [location.state, location.pathname, navigate]);
+  }, [location.state, location.pathname, location.search, navigate]);
 
   const activeThreadId = threadId || null;
+  const explicitNewTask = isExplicitNewTask(location.search);
 
   const {
     activeAgentId,
@@ -177,6 +195,7 @@ function ChatPageInner() {
     loading: sessionsLoading,
     hasMore: sessionsHasMore,
     loadingMore: sessionsLoadingMore,
+    error: sessionsError,
     createSession,
     deleteSession,
     renameSession,
@@ -194,6 +213,10 @@ function ChatPageInner() {
   const handleFetchAllSessions = useCallback(() => {
     void fetchAllSessions(activeThreadId ?? undefined);
   }, [fetchAllSessions, activeThreadId]);
+
+  const handleRetrySessions = useCallback(() => {
+    void fetchSessions(activeThreadId ?? undefined);
+  }, [fetchSessions, activeThreadId]);
 
   useEffect(() => {
     if (routeAgentId && routeAgentId !== activeAgentId) {
@@ -330,6 +353,7 @@ function ChatPageInner() {
     threadId,
     resolvedAgentId,
     activeThreadId,
+    explicitNewTask,
     sessions,
     sessionsLoading,
     prefillInputRef,
@@ -477,7 +501,9 @@ function ChatPageInner() {
     (agentId: string, prefill: string) => {
       beginNavigationIntent();
       resetNavForAgentSwitch();
-      navigate(`/chat/${agentId}`, {
+      const path = buildNewTaskPath(agentId);
+      if (!path) return;
+      navigate(path, {
         replace: true,
         state: prefill ? { prefillInput: prefill } : undefined,
       });
@@ -591,7 +617,16 @@ function ChatPageInner() {
   );
 
   const hasMessages = messages.length > 0;
-  const { businessTag, setBusinessTag } = useWorkbenchUi();
+  const workbenchLayout = useWorkbenchLayout();
+  const {
+    businessTag,
+    setBusinessTag,
+    activeAuxPanel,
+    setActiveAuxPanel,
+    setDirectoryOpen,
+    setPreviewOpen,
+    closeAuxPanel,
+  } = useWorkbenchUi(workbenchLayout);
   const workbenchContext = useMemo(
     () =>
       resolvedAgentId
@@ -599,16 +634,43 @@ function ChatPageInner() {
         : null,
     [resolvedAgentId, activeThreadId],
   );
-  const guidanceContextKey = workbenchContext
+  const workbenchContextKey = workbenchContext
     ? makeContextKey(workbenchContext)
     : "";
-  const previewController = useWorkbenchPreview(guidanceContextKey, {
+  const previewController = useWorkbenchPreview(workbenchContextKey, {
     filePath: filePanelPath,
     handleClose: handleDockClose,
     clearPreviewSelection,
     openFileAt,
   });
   const { artifactChanges } = useTaskArtifacts(workbenchContext);
+  const taskArtifactState = useMemo<
+    ResourceState<readonly TaskArtifactItem[]>
+  >(() => {
+    if (!workbenchContext || artifactChanges.status === "idle") {
+      return { status: "idle" };
+    }
+    if (
+      artifactChanges.status === "ready" ||
+      artifactChanges.status === "partial"
+    ) {
+      const data = projectTaskArtifacts(
+        workbenchContext,
+        artifactChanges.data,
+      );
+      if (artifactChanges.status === "partial") {
+        return {
+          status: "partial",
+          data,
+          loadedScope: artifactChanges.loadedScope,
+        };
+      }
+      return data.length > 0
+        ? { status: "ready", data }
+        : { status: "empty" };
+    }
+    return { status: "empty" };
+  }, [artifactChanges, workbenchContext]);
   const { applyChanges: applyPreviewChanges } = previewController;
   useEffect(() => {
     if (
@@ -618,6 +680,14 @@ function ChatPageInner() {
       applyPreviewChanges(artifactChanges.data);
     }
   }, [artifactChanges, applyPreviewChanges]);
+  const handleOpenWorkbenchFile = useCallback(
+    (path?: string | null) => {
+      if (path) previewController.open(path);
+      else openFilePanel();
+      setPreviewOpen(true);
+    },
+    [previewController.open, openFilePanel, setPreviewOpen],
+  );
   const handleStartWorkbench = useCallback(() => {
     const textarea =
       document.querySelector<HTMLTextAreaElement>("main textarea");
@@ -628,12 +698,17 @@ function ChatPageInner() {
     const intent = (location.state as WorkbenchNavigationState | null)
       ?.workbenchIntent;
     if (!intent) return;
-    navigate(location.pathname, { replace: true, state: {} });
+    navigate(`${location.pathname}${location.search}`, {
+        replace: true,
+        state: {},
+      });
     if (intent === "new-task") {
-      handleNewChat();
+      if (!explicitNewTask) handleNewChat();
     } else if (intent === "projects") {
       setSidebarOpen(true);
+      setDirectoryOpen(true);
     } else if (intent === "library" && resolvedAgentId) {
+      setPreviewOpen(true);
       openFilePanel();
     } else if (intent === "focus-composer") {
       handleStartWorkbench();
@@ -641,7 +716,9 @@ function ChatPageInner() {
   }, [
     location.state,
     location.pathname,
+    location.search,
     navigate,
+    explicitNewTask,
     handleNewChat,
     setSidebarOpen,
     resolvedAgentId,
@@ -655,14 +732,19 @@ function ChatPageInner() {
   }, [workbenchContext, clearPreviewSelection]);
 
   return (
-    <ChatFilePreviewProvider openFilePreview={openFileAt}>
+    <ChatFilePreviewProvider openFilePreview={handleOpenWorkbenchFile}>
       <PoliceWorkbenchShell
         skillRail={<PoliceSkillRail />}
+        layout={workbenchLayout}
+        activeAuxPanel={activeAuxPanel}
+        onAuxPanelChange={setActiveAuxPanel}
         directory={
           <ChatSidebarPanel
             isMobile={isMobile}
-            sidebarOpen={sidebarOpen}
+            sidebarOpen={workbenchLayout.isWide || sidebarOpen}
             sidebarWidth={sidebarWidth}
+            managed={!workbenchLayout.isWide}
+            collapsible={!workbenchLayout.isWide}
             isSidebarResizing={isSidebarResizing}
             sidebarElRef={sidebarElRef}
             agents={agents}
@@ -671,11 +753,14 @@ function ChatPageInner() {
             resolvedAgentId={resolvedAgentId}
             sessionsHasMore={sessionsHasMore}
             sessionsLoadingMore={sessionsLoadingMore}
+            sessionsError={sessionsError}
+            onRetrySessions={handleRetrySessions}
             onLoadMoreSessions={handleLoadMoreSessions}
             onFetchAllSessions={handleFetchAllSessions}
             onSelectSession={(sessionId, agentId) => {
               setActiveAgent(agentId);
               handleSelectSession(sessionId);
+              if (!workbenchLayout.isWide) closeAuxPanel();
             }}
             onAgentSelect={navigateToAgent}
             onDeleteSession={handleDeleteSession}
@@ -686,28 +771,35 @@ function ChatPageInner() {
           />
         }
         preview={
-          <ChatDockPanels
-            slot="side"
-            hasBrowserTool={hasBrowserTool}
-            isMobile={isMobile}
-            dockOpen={dockOpen}
-            dockKind={dockKind}
-            dockMode={dockMode}
-            isResizing={dockIsResizing}
-            panelSizes={dockPanelSizes}
-            agentId={resolvedAgentId ?? ""}
-            filePaths={panelFilePaths}
-            initialPath={filePanelPath}
-            revision={previewController.revision}
-            browserSessionId={browserSessionId}
-            browserEnvironment={browserEnvironment}
-            browserSessionState={browserSessionState}
-            browserControlOwner={browserControlOwner}
-            onModeChange={handleDockModeChange}
-            onClose={handleDockClose}
-            onResizeStart={dockHandleResizeStart}
-            onToggleBrowser={toggleBrowserPanel}
-          />
+          <>
+            <TaskResultPanel
+              context={workbenchContext}
+              artifacts={taskArtifactState}
+              controller={previewController}
+            />
+            <ChatDockPanels
+              slot="side"
+              hasBrowserTool={hasBrowserTool}
+              isMobile={isMobile}
+              dockOpen={dockOpen}
+              dockKind={dockKind}
+              dockMode={dockMode}
+              isResizing={dockIsResizing}
+              panelSizes={dockPanelSizes}
+              agentId={resolvedAgentId ?? ""}
+              filePaths={panelFilePaths}
+              initialPath={filePanelPath}
+              revision={previewController.revision}
+              browserSessionId={browserSessionId}
+              browserEnvironment={browserEnvironment}
+              browserSessionState={browserSessionState}
+              browserControlOwner={browserControlOwner}
+              onModeChange={handleDockModeChange}
+              onClose={handleDockClose}
+              onResizeStart={dockHandleResizeStart}
+              onToggleBrowser={toggleBrowserPanel}
+            />
+          </>
         }
         statusBar={<WorkbenchStatusBar />}
       >
@@ -758,6 +850,7 @@ function ChatPageInner() {
                 quickCards={[]}
                 onPromptClick={handlePromptClick}
                 hideMascot={isStreaming}
+                newTask={explicitNewTask}
                 workbenchOverview={
                   <PoliceHomeLauncher
                     state={homeCatalogState}
@@ -773,7 +866,7 @@ function ChatPageInner() {
                       context={workbenchContext}
                       businessTag={businessTag}
                       onBusinessTagChange={setBusinessTag}
-                      onOpenFile={openFileAt}
+                      onOpenFile={handleOpenWorkbenchFile}
                     />
                   </PoliceHomeLauncher>
                 }

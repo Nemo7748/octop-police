@@ -1,46 +1,25 @@
-/**
- * FileViewer — single dispatch surface for rendering (and optionally editing)
- * a workspace file.
- *
- * It picks the right renderer by file type so both the workspace drawer and
- * the (future) chat file popups share one implementation:
- *
- *   - media (image / video / audio) -> ``MediaPreview``
- *   - documents (pdf / docx / xlsx) -> ``DocumentPreview``
- *   - markdown / html preview        -> ``FilePreview``
- *   - editable text in edit mode     -> ``CodeEditor`` (Monaco)
- *   - other text                     -> plain source (``<pre>``)
- *
- * Text content and edit state are owned by the parent so the toolbar save
- * button (in the drawer) stays in control; the viewer itself stays stateless
- * about persistence.
- */
-
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Spin } from "antd";
 import FilePreview, { getPreviewKind } from "./FilePreview";
 import MediaPreview from "./MediaPreview";
 import CodeEditor from "./CodeEditor";
 import DocumentPreview from "./DocumentPreview";
+import type { FileViewerStatusProps } from "./previewLoadState";
 import { getMediaKind } from "../utils/mediaKind";
 import { getDocKind } from "../utils/docKind";
 import { isProbablyText } from "../utils/fileKind";
 import styles from "../index.module.less";
 
-interface FileViewerProps {
-  agentId: string;
-  path: string;
-  /** When true, text files render with the Monaco editor. */
-  editMode: boolean;
-  /** Current text content (for text/preview modes). */
-  value: string;
-  onChange: (value: string) => void;
-  /** True while the parent is still fetching text content. */
-  fileLoading?: boolean;
-  /** Show rendered preview (markdown/code) vs raw source for text files. */
-  previewMode?: boolean;
-  /** Bump to reload media/document previews without unmounting. */
-  refreshToken?: number;
+interface FileViewerProps extends FileViewerStatusProps {
+  readonly agentId: string;
+  readonly path: string;
+  readonly editMode: boolean;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly fileLoading?: boolean;
+  readonly previewMode?: boolean;
+  readonly refreshToken?: number;
 }
 
 export default function FileViewer({
@@ -52,13 +31,19 @@ export default function FileViewer({
   fileLoading = false,
   previewMode = true,
   refreshToken = 0,
+  onLoadStateChange,
 }: FileViewerProps) {
   const { t } = useTranslation();
-
   const mediaKind = getMediaKind(path);
   const docKind = getDocKind(path);
   const previewKind = getPreviewKind(path);
   const showEditButton = isProbablyText(path);
+
+  useEffect(() => {
+    if (!mediaKind && !docKind && !showEditButton) {
+      onLoadStateChange?.({ status: "unsupported" });
+    }
+  }, [mediaKind, docKind, showEditButton, onLoadStateChange]);
 
   if (mediaKind) {
     return (
@@ -67,6 +52,7 @@ export default function FileViewer({
         path={path}
         kind={mediaKind}
         refreshToken={refreshToken}
+        onLoadStateChange={onLoadStateChange}
       />
     );
   }
@@ -74,10 +60,11 @@ export default function FileViewer({
   if (docKind) {
     return (
       <DocumentPreview
-        key={`${path}:${refreshToken}`}
         agentId={agentId}
         path={path}
         kind={docKind}
+        refreshToken={refreshToken}
+        onLoadStateChange={onLoadStateChange}
       />
     );
   }
@@ -115,7 +102,13 @@ export default function FileViewer({
   }
 
   if (previewKind && previewMode) {
-    return <FilePreview kind={previewKind} content={value} />;
+    return (
+      <FilePreview
+        kind={previewKind}
+        content={value}
+        onRenderFailure={() => onLoadStateChange?.({ status: "render-failed" })}
+      />
+    );
   }
 
   return <pre className={styles.viewerPre}>{value}</pre>;

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { octopThreadsApi } from "../../../api/modules/octopThreads";
 import * as chatStore from "./chatStore";
 import { onSessionEvent } from "./chatStore";
+import type { ResourceError } from "../workbenchTypes";
+import { mapApiErrorKind } from "../utils/workbenchContext";
 
 export interface Session {
   id: string;
@@ -62,6 +64,7 @@ let _sessions: Session[] = [];
 let _loading = true;
 let _hasMore = false;
 let _loadingMore = false;
+let _error: ResourceError | null = null;
 export const SESSION_PAGE_SIZE = 5;
 let _storeAgentId: string | null = null;
 const _loadedLimitByAgent = new Map<string, number>();
@@ -95,6 +98,7 @@ function setModuleSessions(
     loading: _loading,
     hasMore: _hasMore,
     loadingMore: _loadingMore,
+    error: _error,
   };
   notifyListeners();
 }
@@ -106,6 +110,7 @@ function setModuleLoading(value: boolean) {
     loading: _loading,
     hasMore: _hasMore,
     loadingMore: _loadingMore,
+    error: _error,
   };
   notifyListeners();
 }
@@ -188,12 +193,25 @@ function setModuleLoadingMore(value: boolean) {
     loading: _loading,
     hasMore: _hasMore,
     loadingMore: _loadingMore,
+    error: _error,
+  };
+  notifyListeners();
+}
+
+function setModuleError(value: ResourceError | null) {
+  _error = value;
+  _snapshot = {
+    sessions: _sessions,
+    loading: _loading,
+    hasMore: _hasMore,
+    loadingMore: _loadingMore,
+    error: _error,
   };
   notifyListeners();
 }
 
 export function useSessions(agentId: string | null) {
-  const { sessions, loading, hasMore, loadingMore } = useSyncExternalStore(
+  const { sessions, loading, hasMore, loadingMore, error } = useSyncExternalStore(
     subscribeSessionStore,
     getSessionSnapshot,
   );
@@ -212,9 +230,17 @@ export function useSessions(agentId: string | null) {
           limit,
         );
         if (_storeAgentId !== agentId) return _sessions;
+        setModuleError(null);
         applySessionPage(valid, more, limit, agentId, activeThreadId);
         return visibleSessionsForAgent(valid, agentId, activeThreadId);
-      } catch {
+      } catch (error) {
+        if (_storeAgentId === agentId) {
+          setModuleError({
+            kind: mapApiErrorKind(error),
+            message: "",
+            retryable: true,
+          });
+        }
         return _sessions;
       } finally {
         if (_storeAgentId === agentId) {
@@ -295,6 +321,7 @@ export function useSessions(agentId: string | null) {
   useEffect(() => {
     _storeAgentId = agentId;
     setModuleLoading(true);
+    setModuleError(null);
     setModuleSessions([]);
     if (!agentId) {
       setModuleLoading(false);
@@ -309,9 +336,16 @@ export function useSessions(agentId: string | null) {
           SESSION_PAGE_SIZE,
         );
         if (_storeAgentId !== requestedAgent) return;
+        setModuleError(null);
         applySessionPage(valid, more, SESSION_PAGE_SIZE, requestedAgent);
-      } catch {
-        /* ignore */
+      } catch (error) {
+        if (_storeAgentId === requestedAgent) {
+          setModuleError({
+            kind: mapApiErrorKind(error),
+            message: "",
+            retryable: true,
+          });
+        }
       } finally {
         if (_storeAgentId === requestedAgent) {
           setModuleLoading(false);
@@ -390,24 +424,32 @@ export function useSessions(agentId: string | null) {
   );
 
   const pinSession = useCallback(
-    (id: string, pinned: boolean) => {
-      setModuleSessions((prev) =>
-        sortSessions(prev.map((s) => (s.id === id ? { ...s, pinned } : s))),
-      );
-      if (agentId) {
-        void octopThreadsApi.patch(agentId, id, { pinned }).catch(() => {});
+    async (id: string, pinned: boolean): Promise<boolean> => {
+      if (!agentId || !id) return false;
+      try {
+        await octopThreadsApi.patch(agentId, id, { pinned });
+        setModuleSessions((prev) =>
+          sortSessions(prev.map((s) => (s.id === id ? { ...s, pinned } : s))),
+        );
+        return true;
+      } catch {
+        return false;
       }
     },
     [agentId],
   );
 
   const renameSession = useCallback(
-    (id: string, name: string) => {
-      setModuleSessions((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, name } : s)),
-      );
-      if (agentId) {
-        void octopThreadsApi.rename(agentId, id, name).catch(() => {});
+    async (id: string, name: string): Promise<boolean> => {
+      if (!agentId || !id || !name.trim()) return false;
+      try {
+        await octopThreadsApi.rename(agentId, id, name);
+        setModuleSessions((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, name } : s)),
+        );
+        return true;
+      } catch {
+        return false;
       }
     },
     [agentId],
@@ -426,6 +468,7 @@ export function useSessions(agentId: string | null) {
     loading,
     hasMore,
     loadingMore,
+    error,
     createSession,
     deleteSession,
     renameSession,

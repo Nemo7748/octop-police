@@ -86,6 +86,7 @@ export function normalizeWorkspacePath(path: string): string | null {
   const trimmed = path.trim();
   if (!trimmed) return null;
   if (trimmed.startsWith("file://")) return null;
+  if (trimmed.startsWith("/")) return null;
   if (/^[a-zA-Z]:[\\/]/.test(trimmed)) return null;
   if (trimmed.includes("\0")) return null;
   const segments = trimmed.replace(/\\/g, "/").split("/");
@@ -157,7 +158,9 @@ export function hasBriefContent(brief: TaskBrief): boolean {
 
 export function mapApiErrorKind(error: unknown): ResourceErrorKind {
   const message = error instanceof Error ? error.message : String(error);
-  if (/\b401\b/.test(message)) return "unauthorized";
+  if (/unauthorized/i.test(message) || /\b401\b/.test(message)) {
+    return "unauthorized";
+  }
   if (/\b403\b/.test(message)) return "forbidden";
   if (/\b404\b/.test(message)) return "unavailable";
   return "unknown";

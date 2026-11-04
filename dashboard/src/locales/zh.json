@@ -3422,7 +3422,26 @@
       "notAvailable": "不可获取",
       "noPermission": "无权访问"
     },
+    "task": {
+      "navigation": "任务导航",
+      "newTitle": "开始一个新任务",
+      "newDescription": "描述目标并发送首条消息，对话、执行进度与生成产物将在这里持续更新。",
+      "loadFailed": "任务列表加载失败",
+      "manageFailed": "任务操作失败，请重试",
+      "retry": "重试",
+      "empty": "暂无任务，开始一个新任务吧"
+    },
+    "results": {
+      "title": "生成产物",
+      "empty": "产物将在生成后显示",
+      "count": "{{count}} 项产物",
+      "followLatest": "跟随最新",
+      "manual": "手动预览",
+      "following": "正在跟随最新产物",
+      "timeUnknown": "时间未知"
+    },
     "runStatus": {
+      "not-started": "未开始",
       "running": "执行中",
       "done": "已完成",
       "failed": "失败",
@@ -3517,6 +3536,7 @@
       "generating": "产物正在生成",
       "updating": "产物正在更新",
       "updateFailed": "产物更新失败，可重试",
+      "stale": "内容可能不是最新版本",
       "deleted": "该产物已删除或不可用",
       "newArtifactAvailable": "有新产物可切换",
       "backgroundUpdated": "后台有更新",

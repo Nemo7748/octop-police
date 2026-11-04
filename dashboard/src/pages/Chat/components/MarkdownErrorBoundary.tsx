@@ -4,6 +4,7 @@ import { withTranslation, type WithTranslation } from "react-i18next";
 interface Props extends WithTranslation {
   readonly children: ReactNode;
   readonly sourceText?: string;
+  readonly onError?: () => void;
 }
 
 interface State {
@@ -15,6 +16,19 @@ class MarkdownErrorBoundaryInner extends Component<Props, State> {
 
   static getDerivedStateFromError(): State {
     return { hasError: true };
+  }
+
+  componentDidCatch(): void {
+    this.props.onError?.();
+  }
+
+  componentDidUpdate(previousProps: Props): void {
+    if (
+      this.state.hasError &&
+      previousProps.sourceText !== this.props.sourceText
+    ) {
+      this.setState({ hasError: false });
+    }
   }
 
   private readonly retry = () => {

@@ -1,7 +1,17 @@
-import { memo, useCallback, useMemo, useState, useRef, useEffect } from "react";
+import {
+  memo,
+  useCallback,
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { usePoliceNavigation } from "../../../hooks/usePoliceNavigation";
-import { Dropdown, Tooltip } from "antd";
+import { Dropdown, Tooltip, message } from "antd";
+import * as chatStore from "../hooks/chatStore";
+import type { ResourceError } from "../workbenchTypes";
 import type { MenuProps } from "antd";
 import {
   MessageSquare,
@@ -89,6 +99,11 @@ const SessionItem = memo(function SessionItem({
   onPin,
 }: SessionItemProps) {
   const { t } = useTranslation();
+  const snapshot = useSyncExternalStore(
+    (listener) => chatStore.subscribe(session.id, listener),
+    () => chatStore.getSnapshot(session.id),
+  );
+  const runStatus = snapshot.isStreaming ? "running" : snapshot.runStatus;
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(session.name);
   const inputRef = useRef<HTMLInputElement>(null);

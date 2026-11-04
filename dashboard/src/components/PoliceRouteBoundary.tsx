@@ -2,7 +2,10 @@ import { Component, type ReactNode } from "react";
 import { Button, Result } from "antd";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { resolvePoliceCapability } from "../routes/policeCapabilities";
+import {
+  isPoliceWorkbenchPath,
+  resolvePoliceCapability,
+} from "../routes/policeCapabilities";
 import { workbenchDiagnostics } from "../utils/workbenchDiagnostics";
 
 export type PoliceRouteStatus =
@@ -107,7 +110,9 @@ export default function PoliceRouteBoundary({
 
   return (
     <RouteErrorBoundary
-      key={location.pathname}
+      key={
+        isPoliceWorkbenchPath(location.pathname) ? "workbench" : location.pathname
+      }
       onError={() => {
         workbenchDiagnostics.navigation({
           sourceEntry: "route.boundary",

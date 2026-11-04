@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { message } from "antd";
 import type { TFunction } from "i18next";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +7,7 @@ import type { SendReceipt } from "../workbenchTypes";
 import type { Session } from "./useSessions";
 import * as chatStore from "./chatStore";
 import { EMPTY_CHAT_SESSION_KEY, PENDING_THREAD_ID } from "../constants";
+import { buildNewTaskPath } from "../../../routes/policeCapabilities";
 import {
   buildComposerContext,
   buildUserMessage,
@@ -67,6 +68,7 @@ export function useChatSend({
   t,
 }: UseChatSendParams) {
   const navigate = useNavigate();
+  const creatingSessionRef = useRef(false);
 
   const handleSend = useCallback(
     async (
@@ -116,46 +118,55 @@ export function useChatSend({
         );
       };
 
+      if (creatingSessionRef.current) {
+        return { status: "error", reason: "create-session-in-progress" };
+      }
       if (activeThreadId) {
         runSend(activeThreadId, messagesLength > 0);
         return { status: "accepted" };
       }
 
+      creatingSessionRef.current = true;
       const userMsg = buildUserMessage(trimmed, attachments, composerContext);
       chatStore.appendUserMessage(EMPTY_CHAT_SESSION_KEY, userMsg);
 
-      const { resolvedId } = createSession();
-      const snap = chatStore.getSnapshot(EMPTY_CHAT_SESSION_KEY);
-      chatStore.setMessages(PENDING_THREAD_ID, snap.messages);
-      chatStore.clearMessages(EMPTY_CHAT_SESSION_KEY);
-      navigate(`/chat/${agent}/${PENDING_THREAD_ID}`);
+      try {
+        const { resolvedId } = createSession();
+        const snap = chatStore.getSnapshot(EMPTY_CHAT_SESSION_KEY);
+        chatStore.setMessages(PENDING_THREAD_ID, snap.messages);
+        chatStore.clearMessages(EMPTY_CHAT_SESSION_KEY);
+        navigate(`/chat/${agent}/${PENDING_THREAD_ID}`);
 
-      const tid = await resolvedId;
-      if (!tid) {
-        chatStore.clearMessages(PENDING_THREAD_ID);
-        navigate(`/chat/${agent}`, { replace: true });
-        message.error(t("chat.createSessionFailed", "创建会话失败，请重试"));
-        return { status: "error", reason: "create-session-failed" };
+        const tid = await resolvedId;
+        if (!tid) {
+          chatStore.clearMessages(PENDING_THREAD_ID);
+          const path = buildNewTaskPath(agent);
+          if (path) navigate(path, { replace: true });
+          message.error(t("chat.createSessionFailed", "创建会话失败，请重试"));
+          return { status: "error", reason: "create-session-failed" };
+        }
+        const currentSnap = chatStore.getSnapshot(PENDING_THREAD_ID);
+        const hadMessages = currentSnap.messages.length > 1;
+        chatStore.renameSessionKey(PENDING_THREAD_ID, tid);
+        maybeRenameNewThread(tid, hadMessages);
+        chatStore.sendTurn(
+          tid,
+          trimmed,
+          agent,
+          "",
+          attachments,
+          undefined,
+          modelOverride,
+          tid,
+          selectedConnectors,
+          selectedSkills,
+          selectedTargetAgents,
+        );
+        navigate(`/chat/${agent}/${tid}`, { replace: true });
+        return { status: "accepted" };
+      } finally {
+        creatingSessionRef.current = false;
       }
-      const currentSnap = chatStore.getSnapshot(PENDING_THREAD_ID);
-      const hadMessages = currentSnap.messages.length > 1;
-      chatStore.renameSessionKey(PENDING_THREAD_ID, tid);
-      maybeRenameNewThread(tid, hadMessages);
-      chatStore.sendTurn(
-        tid,
-        trimmed,
-        agent,
-        "",
-        attachments,
-        undefined,
-        modelOverride,
-        tid,
-        selectedConnectors,
-        selectedSkills,
-        selectedTargetAgents,
-      );
-      navigate(`/chat/${agent}/${tid}`, { replace: true });
-      return { status: "accepted" };
     },
     [
       activeThreadId,
